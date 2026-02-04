@@ -1,0 +1,160 @@
+import { useState } from 'react';
+import { Phone, Globe, MessageSquare, Copy, Check } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { type VoiceAgent, phoneNumbers } from '@/data/mockData';
+import { useToast } from '@/hooks/use-toast';
+
+interface TestCallModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  agent: VoiceAgent | null;
+}
+
+export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps) {
+  const { toast } = useToast();
+  const [selectedNumber, setSelectedNumber] = useState(phoneNumbers[0]?.id || '');
+  const [calleeName, setCalleeName] = useState('');
+  const [calleePhone, setCalleePhone] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  if (!agent) return null;
+
+  const handleStartCall = () => {
+    toast({
+      title: 'Test call initiated',
+      description: `Starting test call with ${agent.name}`,
+    });
+    onOpenChange(false);
+  };
+
+  const handleCopyCurl = () => {
+    const curl = `curl -X POST 'https://api.dialflo.com/v1/calls' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "assistant_id": "${agent.id}",
+    "phone_number": "${calleePhone}",
+    "name": "${calleeName}"
+  }'`;
+    
+    navigator.clipboard.writeText(curl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({
+      title: 'Copied to clipboard',
+      description: 'cURL command copied successfully.',
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Test {agent.name}</DialogTitle>
+          <DialogDescription>
+            Start a test call to verify your assistant is working correctly
+          </DialogDescription>
+        </DialogHeader>
+
+        <Tabs defaultValue="phone" className="mt-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="phone" className="gap-2">
+              <Phone className="h-4 w-4" />
+              Phone Call
+            </TabsTrigger>
+            <TabsTrigger value="web" className="gap-2">
+              <Globe className="h-4 w-4" />
+              Web Call
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Live Chat
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="phone" className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Call From Number</Label>
+              <Select value={selectedNumber} onValueChange={setSelectedNumber}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a number" />
+                </SelectTrigger>
+                <SelectContent>
+                  {phoneNumbers.map((num) => (
+                    <SelectItem key={num.id} value={num.id}>
+                      {num.number} ({num.label})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="callee-name">Callee Name</Label>
+              <Input
+                id="callee-name"
+                placeholder="John Doe"
+                value={calleeName}
+                onChange={(e) => setCalleeName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="callee-phone">Callee Phone</Label>
+              <Input
+                id="callee-phone"
+                placeholder="+91 9876543210"
+                value={calleePhone}
+                onChange={(e) => setCalleePhone(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button onClick={handleStartCall} className="flex-1">
+                Start Test Call
+              </Button>
+              <Button variant="outline" onClick={handleCopyCurl}>
+                {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                Copy cURL
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="web" className="mt-4 space-y-4">
+            <div className="rounded-lg border border-dashed p-8 text-center">
+              <Globe className="mx-auto h-10 w-10 text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                Web call testing will open an in-browser call interface
+              </p>
+              <Button className="mt-4">Start Web Call</Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="chat" className="mt-4 space-y-4">
+            <div className="rounded-lg border border-dashed p-8 text-center">
+              <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                Live chat testing will open a text-based conversation
+              </p>
+              <Button className="mt-4">Start Chat</Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
