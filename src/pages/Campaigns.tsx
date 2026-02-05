@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, MoreVertical, Pause, Play, Download, Trash2, Eye, Upload } from 'lucide-react';
+import { Plus, MoreVertical, Pause, Play, Download, Trash2, Eye, Upload, Sparkles } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -131,10 +131,8 @@ export default function Campaigns() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div>Attempted: {campaign.attempted.toLocaleString()}</div>
-                        <div className="text-muted-foreground">
-                          Answer: {campaign.answerRate}% • Conv: {campaign.conversion}%
-                        </div>
+                        <div className="font-medium">{campaign.attempted.toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">Answer: {campaign.answerRate}% · Conv: {campaign.conversion}%</div>
                       </div>
                     </TableCell>
                     <TableCell>

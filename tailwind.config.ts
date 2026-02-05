@@ -58,24 +58,26 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         chart: {
-          gray: "hsl(var(--chart-gray))",
-          accent: "hsl(var(--chart-accent))",
-          "accent-dark": "hsl(var(--chart-accent-dark))",
+          primary: "hsl(var(--chart-primary))",
+          secondary: "hsl(var(--chart-secondary))",
+          tertiary: "hsl(var(--chart-tertiary))",
         },
         status: {
           success: "hsl(var(--status-success))",
           warning: "hsl(var(--status-warning))",
           error: "hsl(var(--status-error))",
+          info: "hsl(var(--status-info))",
         },
       },
       borderRadius: {
-        lg: "0.75rem",
-        md: "0.625rem",
-        sm: "0.5rem",
+        lg: "0.75rem", /* 12px for cards */
+        md: "0.625rem", /* 10px for inputs */
+        sm: "0.5rem", /* 8px */
         pill: "999px",
       },
       boxShadow: {
-        subtle: "0 1px 10px rgba(0, 0, 0, 0.1)",
+        subtle: "0 1px 3px rgba(0, 0, 0, 0.04)",
+        none: "none",
       },
       keyframes: {
         "accordion-down": {
