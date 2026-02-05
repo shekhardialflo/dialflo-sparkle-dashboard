@@ -57,11 +57,25 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        chart: {
+          gray: "hsl(var(--chart-gray))",
+          accent: "hsl(var(--chart-accent))",
+          "accent-dark": "hsl(var(--chart-accent-dark))",
+        },
+        status: {
+          success: "hsl(var(--status-success))",
+          warning: "hsl(var(--status-warning))",
+          error: "hsl(var(--status-error))",
+        },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "0.75rem",
+        md: "0.625rem",
+        sm: "0.5rem",
+        pill: "999px",
+      },
+      boxShadow: {
+        subtle: "0 1px 10px rgba(0, 0, 0, 0.1)",
       },
       keyframes: {
         "accordion-down": {

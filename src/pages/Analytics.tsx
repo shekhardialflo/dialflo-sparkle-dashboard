@@ -31,9 +31,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
 } from 'recharts';
 import { analyticsData, campaigns, voiceAgents, insightAgents } from '@/data/mockData';
 
@@ -123,10 +120,10 @@ export default function Analytics() {
         <TabsContent value="overview">
           {/* KPI Cards */}
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <Card>
+            <Card className="shadow-subtle">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
                     <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -138,11 +135,11 @@ export default function Analytics() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-subtle">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
-                    <PhoneForwarded className="h-5 w-5 text-emerald-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[hsl(var(--status-success-bg))]">
+                    <PhoneForwarded className="h-5 w-5 text-[hsl(var(--status-success))]" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Connected</p>
@@ -153,11 +150,11 @@ export default function Analytics() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-subtle">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50">
-                    <PhoneOff className="h-5 w-5 text-amber-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[hsl(var(--status-warning-bg))]">
+                    <PhoneOff className="h-5 w-5 text-[hsl(var(--status-warning))]" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Not Answered</p>
@@ -168,11 +165,11 @@ export default function Analytics() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-subtle">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[hsl(var(--status-info-bg))]">
+                    <CheckCircle className="h-5 w-5 text-[hsl(var(--status-info))]" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Converted</p>
@@ -183,11 +180,11 @@ export default function Analytics() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-subtle">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                    <Clock className="h-5 w-5 text-secondary-foreground" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Avg Duration</p>
@@ -201,44 +198,78 @@ export default function Analytics() {
           </div>
 
           {/* Calls Over Time Chart */}
-          <Card className="mb-6">
+          <Card className="mb-6 shadow-subtle">
             <CardHeader>
-              <CardTitle className="text-base">Calls Over Time</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Calls Over Time</CardTitle>
+                {/* Notion-style Legend */}
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-chart-gray"></span>
+                    Attempted
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-chart-accent"></span>
+                    Connected
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-3 w-3 border-t-2 border-dashed border-chart-accent-dark"></span>
+                    Conversion %
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={analyticsData.callsOverTime}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
                     <XAxis
                       dataKey="date"
                       tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeOpacity={0.5}
                       tickFormatter={(value) => {
                         const date = new Date(value);
                         return `${date.getMonth() + 1}/${date.getDate()}`;
                       }}
                     />
-                    <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                    <YAxis 
+                      yAxisId="left" 
+                      tick={{ fontSize: 12 }} 
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeOpacity={0.5}
+                      axisLine={false}
+                      tickLine={false}
+                    />
                     <YAxis
                       yAxisId="right"
                       orientation="right"
                       domain={[0, 100]}
                       tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeOpacity={0.5}
+                      axisLine={false}
+                      tickLine={false}
                       tickFormatter={(value) => `${value}%`}
                     />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
+                        borderRadius: '10px',
+                        boxShadow: '0 1px 10px rgba(0, 0, 0, 0.1)',
+                      }}
+                      labelFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                       }}
                     />
-                    <Legend />
                     <Line
                       yAxisId="left"
                       type="monotone"
                       dataKey="attempted"
-                      stroke="hsl(var(--primary))"
+                      stroke="hsl(var(--chart-gray))"
                       strokeWidth={2}
                       dot={false}
                       name="Attempted"
@@ -247,7 +278,7 @@ export default function Analytics() {
                       yAxisId="left"
                       type="monotone"
                       dataKey="connected"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--chart-accent))"
                       strokeWidth={2}
                       dot={false}
                       name="Connected"
@@ -256,7 +287,7 @@ export default function Analytics() {
                       yAxisId="right"
                       type="monotone"
                       dataKey="conversionRate"
-                      stroke="hsl(var(--primary))"
+                      stroke="hsl(var(--chart-accent-dark))"
                       strokeWidth={2}
                       strokeDasharray="5 5"
                       dot={false}
@@ -270,7 +301,7 @@ export default function Analytics() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Disposition Breakdown */}
-            <Card>
+            <Card className="shadow-subtle">
               <CardHeader>
                 <CardTitle className="text-base">Disposition Breakdown</CardTitle>
               </CardHeader>
@@ -290,7 +321,7 @@ export default function Analytics() {
             </Card>
 
             {/* Top Campaigns */}
-            <Card>
+            <Card className="shadow-subtle">
               <CardHeader>
                 <CardTitle className="text-base">Top Campaigns</CardTitle>
               </CardHeader>
@@ -321,7 +352,7 @@ export default function Analytics() {
         </TabsContent>
 
         <TabsContent value="campaigns">
-          <Card>
+          <Card className="shadow-subtle">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -353,9 +384,9 @@ export default function Analytics() {
                     <TableCell className="text-right">{campaign.conversion}%</TableCell>
                     <TableCell className="text-right">
                       {Math.random() > 0.5 ? (
-                        <TrendingUp className="ml-auto h-4 w-4 text-emerald-600" />
+                        <TrendingUp className="ml-auto h-4 w-4 text-[hsl(var(--status-success))]" />
                       ) : (
-                        <TrendingDown className="ml-auto h-4 w-4 text-red-600" />
+                        <TrendingDown className="ml-auto h-4 w-4 text-[hsl(var(--status-error))]" />
                       )}
                     </TableCell>
                   </TableRow>
@@ -366,7 +397,7 @@ export default function Analytics() {
         </TabsContent>
 
         <TabsContent value="assistants">
-          <Card>
+          <Card className="shadow-subtle">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -406,9 +437,9 @@ export default function Analytics() {
                     </TableCell>
                     <TableCell className="text-right">
                       {Math.random() > 0.5 ? (
-                        <TrendingUp className="ml-auto h-4 w-4 text-emerald-600" />
+                        <TrendingUp className="ml-auto h-4 w-4 text-[hsl(var(--status-success))]" />
                       ) : (
-                        <TrendingDown className="ml-auto h-4 w-4 text-red-600" />
+                        <TrendingDown className="ml-auto h-4 w-4 text-[hsl(var(--status-error))]" />
                       )}
                     </TableCell>
                   </TableRow>
@@ -420,7 +451,7 @@ export default function Analytics() {
 
         <TabsContent value="insights">
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
+            <Card className="shadow-subtle">
               <CardHeader>
                 <CardTitle className="text-base">Extracted Fields Coverage</CardTitle>
               </CardHeader>
