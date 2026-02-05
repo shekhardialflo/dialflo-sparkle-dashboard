@@ -108,10 +108,10 @@ export default function Campaigns() {
                 {filteredCampaigns.map((campaign) => (
                   <TableRow
                     key={campaign.id}
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-muted/20"
                     onClick={() => handleViewDetails(campaign)}
                   >
-                    <TableCell className="font-medium">{campaign.name}</TableCell>
+                    <TableCell className="font-medium text-foreground">{campaign.name}</TableCell>
                     <TableCell>{campaign.assistantName}</TableCell>
                     <TableCell>
                       <div>
@@ -131,8 +131,8 @@ export default function Campaigns() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div className="font-medium">{campaign.attempted.toLocaleString()}</div>
-                        <div className="text-xs text-muted-foreground">Answer: {campaign.answerRate}% · Conv: {campaign.conversion}%</div>
+                        <div className="font-semibold text-foreground">{campaign.attempted.toLocaleString()}</div>
+                        <div className="text-[11px] text-muted-foreground/70">Answer: {campaign.answerRate}% · Conv: {campaign.conversion}%</div>
                       </div>
                     </TableCell>
                     <TableCell>

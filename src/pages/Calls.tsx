@@ -263,8 +263,8 @@ export default function Calls() {
                 {visibleColumns.includes('callee') && (
                   <TableCell>
                     <div>
-                      <span className="font-medium">{call.calleeName}</span>
-                      <p className="text-xs text-muted-foreground">{call.calleePhone}</p>
+                      <span className="font-medium text-foreground">{call.calleeName}</span>
+                      <p className="text-[11px] text-muted-foreground/70">{call.calleePhone}</p>
                     </div>
                   </TableCell>
                 )}
@@ -293,7 +293,7 @@ export default function Calls() {
                 )}
                 {visibleColumns.includes('disposition') && (
                   <TableCell>
-                    <span className="inline-flex items-center rounded-pill bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                    <span className="inline-flex items-center rounded-full bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                       {call.disposition}
                     </span>
                   </TableCell>
@@ -365,21 +365,21 @@ function CallDetailsDrawer({ open, onOpenChange, call }: CallDetailsDrawerProps)
           <div className="p-5 space-y-5">
             {/* Summary Grid */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-muted/50 p-3">
+              <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">Status</p>
                 <StatusBadge status={getCallStatus(call.status)} className="mt-1">
                   {call.status.replace('_', ' ')}
                 </StatusBadge>
               </div>
-              <div className="rounded-lg bg-muted/50 p-3">
+              <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">Duration</p>
                 <p className="mt-1 text-sm font-medium">{formatDuration(call.duration)}</p>
               </div>
-              <div className="rounded-lg bg-muted/50 p-3">
+              <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">Cost</p>
                 <p className="mt-1 text-sm font-medium">{call.cost > 0 ? `₹${call.cost.toFixed(2)}` : '-'}</p>
               </div>
-              <div className="rounded-lg bg-muted/50 p-3">
+              <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">Called At</p>
                 <p className="mt-1 text-xs font-medium">{formatDateTime(call.calledAt)}</p>
               </div>
@@ -402,7 +402,7 @@ function CallDetailsDrawer({ open, onOpenChange, call }: CallDetailsDrawerProps)
             <Separator />
 
             {/* Disposition */}
-            <div className="rounded-lg border border-border p-4">
+            <div className="rounded-lg border border-border/50 p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Disposition</p>
@@ -417,7 +417,7 @@ function CallDetailsDrawer({ open, onOpenChange, call }: CallDetailsDrawerProps)
 
             {/* Extracted Fields (if insight agent ran) */}
             {call.extractedFields && Object.keys(call.extractedFields).length > 0 && (
-              <div className="rounded-lg border border-border p-4">
+              <div className="rounded-lg border border-border/50 p-4">
                 <p className="text-xs font-medium text-muted-foreground mb-3">Extracted Fields</p>
                 <div className="space-y-2">
                   {Object.entries(call.extractedFields).map(([key, value]) => (

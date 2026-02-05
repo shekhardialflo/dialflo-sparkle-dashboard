@@ -120,41 +120,41 @@ export default function Analytics() {
           {/* KPI Cards */}
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <Card>
-              <CardContent className="p-5">
+              <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Attempted</p>
-                <p className="text-2xl font-semibold text-foreground">
+                <p className="text-xl font-semibold text-foreground">
                   {analyticsData.totalAttempted.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-5">
+              <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Connected</p>
-                <p className="text-2xl font-semibold text-foreground">
+                <p className="text-2xl font-bold text-foreground">
                   {analyticsData.totalConnected.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-5">
+              <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Not Answered</p>
-                <p className="text-2xl font-semibold text-foreground">
+                <p className="text-xl font-semibold text-foreground">
                   {analyticsData.notAnswered.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-5">
+              <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Converted</p>
-                <p className="text-2xl font-semibold text-foreground">
+                <p className="text-2xl font-bold text-foreground">
                   {analyticsData.converted.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-5">
+              <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Avg Duration</p>
-                <p className="text-2xl font-semibold text-foreground">
+                <p className="text-xl font-semibold text-foreground">
                   {formatDuration(analyticsData.avgDuration)}
                 </p>
               </CardContent>
@@ -163,35 +163,35 @@ export default function Analytics() {
 
           {/* Calls Over Time Chart */}
           <Card className="mb-6">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">Calls Over Time</CardTitle>
+                <CardTitle className="text-sm font-medium text-foreground">Calls Over Time</CardTitle>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-2 rounded-full bg-foreground"></span>
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/40"></span>
                     Attempted
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-2 rounded-full bg-secondary"></span>
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary"></span>
                     Connected
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-block w-3 border-t border-dashed border-muted-foreground"></span>
+                    <span className="inline-block w-3 border-t border-dashed border-muted-foreground/60"></span>
                     Conversion %
                   </div>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-72">
+              <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={analyticsData.callsOverTime}>
-                    <CartesianGrid strokeDasharray="2 2" stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
+                    <CartesianGrid strokeDasharray="2 2" stroke="hsl(var(--border))" strokeOpacity={0.25} vertical={false} />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 10 }}
                       stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.5}
+                      strokeOpacity={0.3}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(value) => {
@@ -201,9 +201,9 @@ export default function Analytics() {
                     />
                     <YAxis 
                       yAxisId="left" 
-                      tick={{ fontSize: 11 }} 
+                      tick={{ fontSize: 10 }} 
                       stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.5}
+                      strokeOpacity={0.3}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -211,9 +211,9 @@ export default function Analytics() {
                       yAxisId="right"
                       orientation="right"
                       domain={[0, 100]}
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 10 }}
                       stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.5}
+                      strokeOpacity={0.3}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(value) => `${value}%`}
@@ -221,10 +221,10 @@ export default function Analytics() {
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
+                        border: '1px solid hsl(var(--border) / 0.5)',
                         borderRadius: '8px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                        fontSize: '12px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                        fontSize: '11px',
                       }}
                       labelFormatter={(value) => {
                         const date = new Date(value);
@@ -235,8 +235,9 @@ export default function Analytics() {
                       yAxisId="left"
                       type="monotone"
                       dataKey="attempted"
-                      stroke="hsl(var(--foreground))"
-                      strokeWidth={2}
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeOpacity={0.5}
+                      strokeWidth={1.5}
                       dot={false}
                       name="Attempted"
                     />
@@ -244,8 +245,8 @@ export default function Analytics() {
                       yAxisId="left"
                       type="monotone"
                       dataKey="connected"
-                      stroke="hsl(var(--secondary))"
-                      strokeWidth={2}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2.5}
                       dot={false}
                       name="Connected"
                     />
@@ -254,7 +255,8 @@ export default function Analytics() {
                       type="monotone"
                       dataKey="conversionRate"
                       stroke="hsl(var(--muted-foreground))"
-                      strokeWidth={1.5}
+                      strokeOpacity={0.6}
+                      strokeWidth={1}
                       strokeDasharray="5 5"
                       dot={false}
                       name="Conversion %"
@@ -269,18 +271,18 @@ export default function Analytics() {
             {/* Disposition Breakdown */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base font-semibold">Disposition Breakdown</CardTitle>
+                <CardTitle className="text-sm font-medium">Disposition Breakdown</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 {analyticsData.dispositionBreakdown.map((item) => (
-                  <div key={item.name} className="space-y-1.5">
+                  <div key={item.name} className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-foreground">{item.name}</span>
-                      <span className="text-muted-foreground">
+                      <span className="text-foreground/80">{item.name}</span>
+                      <span className="text-muted-foreground/70">
                         {item.count.toLocaleString()} ({item.percentage}%)
                       </span>
                     </div>
-                    <Progress value={item.percentage} className="h-1.5" />
+                    <Progress value={item.percentage} className="h-1" />
                   </div>
                 ))}
               </CardContent>
@@ -289,7 +291,7 @@ export default function Analytics() {
             {/* Top Campaigns */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base font-semibold">Top Campaigns</CardTitle>
+                <CardTitle className="text-sm font-medium">Top Campaigns</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -333,8 +335,8 @@ export default function Analytics() {
               </TableHeader>
               <TableBody>
                 {campaigns.map((campaign) => (
-                  <TableRow key={campaign.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">{campaign.name}</TableCell>
+                  <TableRow key={campaign.id} className="cursor-pointer hover:bg-muted/20">
+                    <TableCell className="font-medium text-foreground">{campaign.name}</TableCell>
                     <TableCell>
                       <StatusBadge status={getCampaignStatus(campaign.status)}>
                         {campaign.status}
@@ -377,8 +379,8 @@ export default function Analytics() {
               </TableHeader>
               <TableBody>
                 {voiceAgents.map((agent) => (
-                  <TableRow key={agent.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">{agent.name}</TableCell>
+                  <TableRow key={agent.id} className="cursor-pointer hover:bg-muted/20">
+                    <TableCell className="font-medium text-foreground">{agent.name}</TableCell>
                     <TableCell>
                       <StatusBadge
                         status={
@@ -417,9 +419,12 @@ export default function Analytics() {
 
         <TabsContent value="insights">
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="shadow-subtle">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-base">Extracted Fields Coverage</CardTitle>
+                <div>
+                  <CardTitle className="text-sm font-medium">Extracted Fields Coverage</CardTitle>
+                  <p className="mt-1 text-xs text-muted-foreground/70">How many calls have extracted insights from Insight Agents</p>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -441,7 +446,10 @@ export default function Analytics() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Insight Agent Runs</CardTitle>
+                <div>
+                  <CardTitle className="text-sm font-medium">Insight Agent Runs</CardTitle>
+                  <p className="mt-1 text-xs text-muted-foreground/70">Recent activity from your configured Insight Agents</p>
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
