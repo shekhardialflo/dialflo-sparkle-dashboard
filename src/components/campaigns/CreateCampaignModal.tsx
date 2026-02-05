@@ -21,13 +21,27 @@ import { Card, CardContent } from '@/components/ui/card';
 import { voiceAgents, contactLists, insightAgents, phoneNumbers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { RetryStrategy, defaultRetryStrategy } from '@/types/retryStrategy';
+import { RetryStrategyEditor } from './RetryStrategyEditor';
 
 interface CreateCampaignModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const steps = ['Campaign Settings', 'Calling List', 'Review & Launch'];
+const steps = ['Campaign Settings', 'Calling List', 'Retry Strategy', 'Review & Launch'];
+
+// Default dispositions for new campaigns
+const defaultCampaignDispositions = [
+  'Interested',
+  'Not Interested',
+  'Callback Requested',
+  'Appointment Set',
+  'Information Sent',
+  'Do Not Call',
+  'Wrong Number',
+  'Invalid Number',
+];
 
 export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalProps) {
   const { toast } = useToast();
@@ -42,6 +56,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
   const [selectedList, setSelectedList] = useState('');
   const [selectedInsightAgent, setSelectedInsightAgent] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [retryStrategy, setRetryStrategy] = useState<RetryStrategy>(defaultRetryStrategy);
 
   const resetForm = () => {
     setCurrentStep(0);
@@ -53,6 +68,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     setSelectedList('');
     setSelectedInsightAgent('');
     setUploadedFile(null);
+    setRetryStrategy(defaultRetryStrategy);
   };
 
   const handleClose = () => {
@@ -73,6 +89,13 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     if (file) {
       setUploadedFile(file);
     }
+  };
+
+  const formatRetryTiming = () => {
+    if (retryStrategy.backoffMode === 'FIXED') {
+      return `Every ${retryStrategy.minMinutesBetween}m`;
+    }
+    return retryStrategy.backoffMinutes.map((m) => `${m}m`).join(' → ');
   };
 
   return (
@@ -104,7 +127,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
               {index < steps.length - 1 && (
                 <div
                   className={cn(
-                    'mx-2 h-0.5 w-16 sm:w-24',
+                    'mx-2 h-0.5 w-12 sm:w-16',
                     index < currentStep ? 'bg-primary' : 'bg-border'
                   )}
                 />
@@ -325,6 +348,17 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
 
           {currentStep === 2 && (
             <div className="space-y-4">
+              <RetryStrategyEditor
+                value={retryStrategy}
+                onChange={setRetryStrategy}
+                campaignDispositions={defaultCampaignDispositions}
+                compact
+              />
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-4">
               <h3 className="font-medium">Review your campaign</h3>
               <div className="rounded-lg border p-4 space-y-3">
                 <div className="flex justify-between">
@@ -359,6 +393,14 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                   <span className="text-muted-foreground">Insight Agent</span>
                   <span className="font-medium">
                     {insightAgents.find((a) => a.id === selectedInsightAgent)?.name || 'None'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Retry Strategy</span>
+                  <span className="font-medium">
+                    {retryStrategy.enabled
+                      ? `${retryStrategy.maxAttempts} retries, ${formatRetryTiming()}`
+                      : 'Off'}
                   </span>
                 </div>
               </div>

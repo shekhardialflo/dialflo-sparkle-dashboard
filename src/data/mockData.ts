@@ -28,6 +28,8 @@ export interface InsightAgent {
   updatedAt: string;
 }
 
+import { RetryStrategy, defaultRetryStrategy } from '@/types/retryStrategy';
+
 export interface Campaign {
   id: string;
   name: string;
@@ -47,6 +49,8 @@ export interface Campaign {
   totalCost: number;
   insightAgentId?: string;
   lastInsightRun?: string;
+  dispositions: string[];
+  retryStrategy?: RetryStrategy;
 }
 
 export interface CallRecord {
@@ -296,6 +300,11 @@ export const contactLists: ContactList[] = [
   { id: 'l6', name: 'Enterprise Prospects', records: 89, updatedAt: '2 days ago', source: 'manual', tags: ['enterprise', 'high-value'] },
 ];
 
+// Campaign-specific dispositions
+const salesDispositions = ['Interested', 'Not Interested', 'Callback Requested', 'Appointment Set', 'Do Not Call', 'Wrong Number', 'Invalid Number'];
+const supportDispositions = ['Issue Resolved', 'Escalated', 'Callback Requested', 'Information Provided', 'Do Not Call', 'Wrong Number'];
+const collectionDispositions = ['Payment Committed', 'Partial Payment', 'Callback Requested', 'Dispute', 'Do Not Call', 'Wrong Number', 'Invalid Number'];
+
 // Mock Campaigns
 export const campaigns: Campaign[] = [
   {
@@ -317,6 +326,29 @@ export const campaigns: Campaign[] = [
     totalCost: 1234.50,
     insightAgentId: 'ia1',
     lastInsightRun: '2 hours ago',
+    dispositions: salesDispositions,
+    retryStrategy: {
+      enabled: true,
+      template: 'NO_ANSWER',
+      maxAttempts: 3,
+      minMinutesBetween: 30,
+      backoffMode: 'FIXED',
+      backoffMinutes: [15, 30, 60],
+      trigger: {
+        statuses: ['not_answered', 'voicemail'],
+        dispositions: [],
+        durationLessThanSec: 30,
+      },
+      guardrails: {
+        stopOnConverted: true,
+        stopDispositions: ['Do Not Call', 'Wrong Number', 'Invalid Number'],
+        quietHoursEnabled: true,
+        timezone: 'Asia/Kolkata',
+        allowedDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        startHour: '10:00',
+        endHour: '18:00',
+      },
+    },
   },
   {
     id: 'c2',
@@ -335,6 +367,29 @@ export const campaigns: Campaign[] = [
     conversion: 0,
     avgDuration: 0,
     totalCost: 0,
+    dispositions: collectionDispositions,
+    retryStrategy: {
+      enabled: true,
+      template: 'DISPOSITION',
+      maxAttempts: 5,
+      minMinutesBetween: 60,
+      backoffMode: 'BACKOFF',
+      backoffMinutes: [30, 60, 120],
+      trigger: {
+        statuses: [],
+        dispositions: ['Callback Requested'],
+        durationLessThanSec: 30,
+      },
+      guardrails: {
+        stopOnConverted: true,
+        stopDispositions: ['Payment Committed', 'Do Not Call', 'Wrong Number'],
+        quietHoursEnabled: true,
+        timezone: 'Asia/Kolkata',
+        allowedDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        startHour: '09:00',
+        endHour: '19:00',
+      },
+    },
   },
   {
     id: 'c3',
@@ -355,6 +410,7 @@ export const campaigns: Campaign[] = [
     totalCost: 2456.00,
     insightAgentId: 'ia1',
     lastInsightRun: '3 days ago',
+    dispositions: salesDispositions,
   },
   {
     id: 'c4',
@@ -373,6 +429,7 @@ export const campaigns: Campaign[] = [
     conversion: 0,
     avgDuration: 0,
     totalCost: 0,
+    dispositions: salesDispositions,
   },
   {
     id: 'c5',
@@ -393,6 +450,29 @@ export const campaigns: Campaign[] = [
     totalCost: 567.00,
     insightAgentId: 'ia4',
     lastInsightRun: '1 day ago',
+    dispositions: salesDispositions,
+    retryStrategy: {
+      enabled: true,
+      template: 'SHORT_CALL',
+      maxAttempts: 2,
+      minMinutesBetween: 15,
+      backoffMode: 'FIXED',
+      backoffMinutes: [15, 30, 60],
+      trigger: {
+        statuses: [],
+        dispositions: [],
+        durationLessThanSec: 20,
+      },
+      guardrails: {
+        stopOnConverted: true,
+        stopDispositions: ['Appointment Set', 'Do Not Call'],
+        quietHoursEnabled: true,
+        timezone: 'Asia/Kolkata',
+        allowedDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        startHour: '10:00',
+        endHour: '18:00',
+      },
+    },
   },
   {
     id: 'c6',
@@ -412,6 +492,7 @@ export const campaigns: Campaign[] = [
     avgDuration: 178,
     totalCost: 1890.00,
     insightAgentId: 'ia3',
+    dispositions: supportDispositions,
     lastInsightRun: '1 month ago',
   },
 ];

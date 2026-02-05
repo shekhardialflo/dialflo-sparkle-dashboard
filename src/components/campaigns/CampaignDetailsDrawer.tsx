@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { X, Download, Sparkles, Clock } from 'lucide-react';
 import {
   Sheet,
@@ -18,9 +19,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { type Campaign, insightAgents } from '@/data/mockData';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { RetryStrategySummary } from './RetryStrategySummary';
+import { RetryStrategyEditor } from './RetryStrategyEditor';
+import { RetryQueueDrawer } from './RetryQueueDrawer';
+import { RetryStrategy, defaultRetryStrategy } from '@/types/retryStrategy';
 
 interface CampaignDetailsDrawerProps {
   open: boolean;
@@ -30,8 +41,13 @@ interface CampaignDetailsDrawerProps {
 
 export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: CampaignDetailsDrawerProps) {
   const { toast } = useToast();
+  const [editStrategyOpen, setEditStrategyOpen] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [localStrategy, setLocalStrategy] = useState<RetryStrategy | null>(null);
 
   if (!campaign) return null;
+
+  const currentStrategy = localStrategy || campaign.retryStrategy || defaultRetryStrategy;
 
   const formatSchedule = (dateStr: string) => {
     try {
@@ -61,142 +77,193 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
     });
   };
 
+  const handleEditStrategy = () => {
+    setLocalStrategy(currentStrategy);
+    setEditStrategyOpen(true);
+  };
+
+  const handleSaveStrategy = () => {
+    toast({
+      title: 'Strategy updated',
+      description: 'Retry strategy has been saved.',
+    });
+    setEditStrategyOpen(false);
+  };
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl p-0" side="right">
-        <SheetHeader className="border-b border-border p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <SheetTitle>{campaign.name}</SheetTitle>
-              <div className="mt-2 flex items-center gap-2">
-                <StatusBadge status={getCampaignStatus(campaign.status)}>
-                  {campaign.status}
-                </StatusBadge>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="w-full sm:max-w-xl p-0" side="right">
+          <SheetHeader className="border-b border-border p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <SheetTitle>{campaign.name}</SheetTitle>
+                <div className="mt-2 flex items-center gap-2">
+                  <StatusBadge status={getCampaignStatus(campaign.status)}>
+                    {campaign.status}
+                  </StatusBadge>
+                </div>
               </div>
+              <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </SheetHeader>
+          </SheetHeader>
 
-        <ScrollArea className="flex-1 h-[calc(100vh-180px)]">
-          <div className="p-6 space-y-6">
-            {/* Overview */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Overview</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Assistant</span>
-                  <span className="font-medium">{campaign.assistantName}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">List</span>
-                  <span className="font-medium">
-                    {campaign.listName} ({campaign.listCount.toLocaleString()})
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Start</span>
-                  <span className="font-medium">{formatSchedule(campaign.scheduleStart)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">End</span>
-                  <span className="font-medium">{formatSchedule(campaign.scheduleEnd)}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Performance */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Performance</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-lg bg-muted/50 p-4">
-                    <p className="text-sm text-muted-foreground">Attempted</p>
-                    <p className="text-2xl font-semibold">{campaign.attempted.toLocaleString()}</p>
-                  </div>
-                  <div className="rounded-lg bg-muted/50 p-4">
-                    <p className="text-sm text-muted-foreground">Connected</p>
-                    <p className="text-2xl font-semibold">{campaign.connected.toLocaleString()}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
+          <ScrollArea className="flex-1 h-[calc(100vh-180px)]">
+            <div className="p-6 space-y-6">
+              {/* Overview */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Overview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Answer Rate</span>
-                    <span className="font-medium">{campaign.answerRate}%</span>
+                    <span className="text-muted-foreground">Assistant</span>
+                    <span className="font-medium">{campaign.assistantName}</span>
                   </div>
-                  <Progress value={campaign.answerRate} className="h-2" />
-                </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">List</span>
+                    <span className="font-medium">
+                      {campaign.listName} ({campaign.listCount.toLocaleString()})
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Start</span>
+                    <span className="font-medium">{formatSchedule(campaign.scheduleStart)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">End</span>
+                    <span className="font-medium">{formatSchedule(campaign.scheduleEnd)}</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-lg font-semibold">{formatDuration(campaign.avgDuration)}</p>
-                    <p className="text-xs text-muted-foreground">Avg Duration</p>
+              {/* Performance */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Performance</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg bg-muted/50 p-4">
+                      <p className="text-sm text-muted-foreground">Attempted</p>
+                      <p className="text-2xl font-semibold">{campaign.attempted.toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-4">
+                      <p className="text-sm text-muted-foreground">Connected</p>
+                      <p className="text-2xl font-semibold">{campaign.connected.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-lg font-semibold">{campaign.conversion}%</p>
-                    <p className="text-xs text-muted-foreground">Conversion</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold">₹{campaign.totalCost.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">Total Cost</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Insight Agent */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Insight Agent</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Select Insight Agent</Label>
-                  <Select defaultValue={campaign.insightAgentId || 'none'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose agent" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {insightAgents.map((agent) => (
-                        <SelectItem key={agent.id} value={agent.id}>
-                          {agent.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {campaign.lastInsightRun && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    Last run: {campaign.lastInsightRun}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Answer Rate</span>
+                      <span className="font-medium">{campaign.answerRate}%</span>
+                    </div>
+                    <Progress value={campaign.answerRate} className="h-2" />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <p className="text-lg font-semibold">{formatDuration(campaign.avgDuration)}</p>
+                      <p className="text-xs text-muted-foreground">Avg Duration</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold">{campaign.conversion}%</p>
+                      <p className="text-xs text-muted-foreground">Conversion</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Retry Strategy */}
+              <RetryStrategySummary
+                strategy={currentStrategy}
+                onEdit={handleEditStrategy}
+                onViewQueue={() => setQueueOpen(true)}
+              />
+
+              {/* Insight Agent */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Insight Agent</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Select Insight Agent</Label>
+                    <Select defaultValue={campaign.insightAgentId || 'none'}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose agent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {insightAgents.map((agent) => (
+                          <SelectItem key={agent.id} value={agent.id}>
+                            {agent.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {campaign.lastInsightRun && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      Last run: {campaign.lastInsightRun}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </ScrollArea>
+
+          <div className="border-t border-border p-4">
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={handleDownload}>
+                <Download className="mr-2 h-4 w-4" />
+                Download Results
+              </Button>
+              <Button className="flex-1" onClick={handleGenerateInsights}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate Insights
+              </Button>
+            </div>
           </div>
-        </ScrollArea>
+        </SheetContent>
+      </Sheet>
 
-        <div className="border-t border-border p-4">
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={handleDownload}>
-              <Download className="mr-2 h-4 w-4" />
-              Download Results
-            </Button>
-            <Button className="flex-1" onClick={handleGenerateInsights}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate Insights
-            </Button>
+      {/* Edit Strategy Dialog */}
+      <Dialog open={editStrategyOpen} onOpenChange={setEditStrategyOpen}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Retry Strategy</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {localStrategy && (
+              <RetryStrategyEditor
+                value={localStrategy}
+                onChange={setLocalStrategy}
+                campaignDispositions={campaign.dispositions || []}
+                compact
+              />
+            )}
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setEditStrategyOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveStrategy}>Save Strategy</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Retry Queue Drawer */}
+      <RetryQueueDrawer
+        open={queueOpen}
+        onOpenChange={setQueueOpen}
+        campaignName={campaign.name}
+        queueItems={[]}
+      />
+    </>
   );
 }
