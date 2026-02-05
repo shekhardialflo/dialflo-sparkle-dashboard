@@ -204,7 +204,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                     <SelectValue placeholder="Select insight agent" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {insightAgents.map((agent) => (
                       <SelectItem key={agent.id} value={agent.id}>
                         {agent.name}

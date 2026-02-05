@@ -159,12 +159,12 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Select Insight Agent</Label>
-                  <Select defaultValue={campaign.insightAgentId || ''}>
+                  <Select defaultValue={campaign.insightAgentId || 'none'}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose agent" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {insightAgents.map((agent) => (
                         <SelectItem key={agent.id} value={agent.id}>
                           {agent.name}
