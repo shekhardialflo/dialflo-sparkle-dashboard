@@ -21,7 +21,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { voices } from '@/data/mockData';
+import { voices, voiceAgents } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,7 +43,6 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
   // Form state
   const [name, setName] = useState('');
   const [primaryLanguage, setPrimaryLanguage] = useState('english');
-  const [secondaryLanguage, setSecondaryLanguage] = useState('');
   const [direction, setDirection] = useState<Direction>('outbound');
   const [selectedVoice, setSelectedVoice] = useState('');
   const [firstMessage, setFirstMessage] = useState('');
@@ -54,13 +53,13 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
   // Insight agent form state
   const [analysisPrompt, setAnalysisPrompt] = useState('');
   const [insightFields, setInsightFields] = useState<{ name: string; type: string }[]>([]);
+  const [selectedVoiceAgentId, setSelectedVoiceAgentId] = useState('');
 
   const resetForm = () => {
     setAgentType(null);
     setCurrentStep(0);
     setName('');
     setPrimaryLanguage('english');
-    setSecondaryLanguage('');
     setDirection('outbound');
     setSelectedVoice('');
     setFirstMessage('');
@@ -69,6 +68,7 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
     setVariables([]);
     setAnalysisPrompt('');
     setInsightFields([]);
+    setSelectedVoiceAgentId('');
   };
 
   const handleClose = () => {
@@ -77,9 +77,12 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
   };
 
   const handleCreate = () => {
+    const agentName = agentType === 'insight' 
+      ? `${voiceAgents.find(a => a.id === selectedVoiceAgentId)?.name} – Insight Agent`
+      : name;
     toast({
       title: 'Assistant created',
-      description: `${name} has been created successfully.`,
+      description: `${agentName} has been created successfully.`,
     });
     handleClose();
   };
@@ -158,22 +161,35 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
 
   // Insight agent form
   if (agentType === 'insight') {
+    const selectedVoiceAgent = voiceAgents.find(a => a.id === selectedVoiceAgentId);
+    
     return (
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Create Insight Agent</DialogTitle>
-            <DialogDescription>Configure your post-call analysis agent</DialogDescription>
+            <DialogDescription>Configure post-call analysis for the selected voice agent</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="insight-name">Agent Name</Label>
-              <Input
-                id="insight-name"
-                placeholder="e.g., Sales Call Analyzer"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <Label>Select Voice Agent</Label>
+              <Select value={selectedVoiceAgentId} onValueChange={setSelectedVoiceAgentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a voice agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {voiceAgents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedVoiceAgent && (
+                <p className="text-xs text-muted-foreground">
+                  Insight Agent name: <span className="font-medium">{selectedVoiceAgent.name} – Insight Agent</span>
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="analysis-prompt">Analysis Prompt</Label>
@@ -242,7 +258,7 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
             <Button variant="outline" onClick={() => setAgentType(null)}>
               Back
             </Button>
-            <Button onClick={handleCreate} disabled={!name || !analysisPrompt}>
+            <Button onClick={handleCreate} disabled={!selectedVoiceAgentId || !analysisPrompt}>
               Create Insight Agent
             </Button>
           </div>
@@ -315,20 +331,6 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                       <SelectItem value="hindi">Hindi</SelectItem>
                       <SelectItem value="spanish">Spanish</SelectItem>
                       <SelectItem value="french">French</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Secondary Language</Label>
-                  <Select value={secondaryLanguage} onValueChange={setSecondaryLanguage}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Optional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="hindi">Hindi</SelectItem>
-                      <SelectItem value="spanish">Spanish</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

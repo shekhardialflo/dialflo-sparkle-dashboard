@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, MoreVertical, Play, Copy, History, BarChart3, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, MoreVertical, Play, History, BarChart3, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ function getActivityCue(callCount: number, updatedAt: string): { text: string; t
 }
 
 export default function Assistants() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('updated');
@@ -77,6 +79,14 @@ export default function Assistants() {
   const handleViewDetails = (agent: VoiceAgent | InsightAgent) => {
     setSelectedAgent(agent);
     setDetailsOpen(true);
+  };
+
+  const handleHistory = (agentId: string) => {
+    navigate(`/calls?assistant=${agentId}`);
+  };
+
+  const handleAnalytics = (agentId: string) => {
+    navigate(`/analytics?assistant=${agentId}`);
   };
 
   return (
@@ -134,6 +144,8 @@ export default function Assistants() {
                 agent={agent}
                 onTest={() => handleTestCall(agent)}
                 onView={() => handleViewDetails(agent)}
+                onHistory={() => handleHistory(agent.id)}
+                onAnalytics={() => handleAnalytics(agent.id)}
               />
             ))}
           </div>
@@ -146,6 +158,8 @@ export default function Assistants() {
                 key={agent.id}
                 agent={agent}
                 onView={() => handleViewDetails(agent)}
+                onHistory={() => handleHistory(agent.id)}
+                onAnalytics={() => handleAnalytics(agent.id)}
               />
             ))}
           </div>
@@ -171,9 +185,11 @@ interface VoiceAgentCardProps {
   agent: VoiceAgent;
   onTest: () => void;
   onView: () => void;
+  onHistory: () => void;
+  onAnalytics: () => void;
 }
 
-function VoiceAgentCard({ agent, onTest, onView }: VoiceAgentCardProps) {
+function VoiceAgentCard({ agent, onTest, onView, onHistory, onAnalytics }: VoiceAgentCardProps) {
   const activityCue = getActivityCue(agent.callCount, agent.updatedAt);
 
   return (
@@ -183,7 +199,7 @@ function VoiceAgentCard({ agent, onTest, onView }: VoiceAgentCardProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-muted-foreground/80 font-medium text-xs">
             {agent.initials}
           </div>
-          <AgentKebabMenu onTest={onTest} />
+          <AgentKebabMenu onTest={onTest} onHistory={onHistory} onAnalytics={onAnalytics} />
         </div>
         <h3 className="mb-2 font-medium text-foreground text-sm">{agent.name}</h3>
         <div className="mb-3 flex flex-wrap gap-1.5">
@@ -216,9 +232,11 @@ function VoiceAgentCard({ agent, onTest, onView }: VoiceAgentCardProps) {
 interface InsightAgentCardProps {
   agent: InsightAgent;
   onView: () => void;
+  onHistory: () => void;
+  onAnalytics: () => void;
 }
 
-function InsightAgentCard({ agent, onView }: InsightAgentCardProps) {
+function InsightAgentCard({ agent, onView, onHistory, onAnalytics }: InsightAgentCardProps) {
   const activityCue = getActivityCue(agent.callsAnalyzed, agent.updatedAt);
 
   return (
@@ -235,13 +253,13 @@ function InsightAgentCard({ agent, onView }: InsightAgentCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Copy className="mr-2 h-4 w-4" />
-                Clone
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onHistory(); }}>
                 <History className="mr-2 h-4 w-4" />
                 History
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAnalytics(); }}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Analytics
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive">
@@ -270,9 +288,11 @@ function InsightAgentCard({ agent, onView }: InsightAgentCardProps) {
 
 interface AgentKebabMenuProps {
   onTest: () => void;
+  onHistory: () => void;
+  onAnalytics: () => void;
 }
 
-function AgentKebabMenu({ onTest }: AgentKebabMenuProps) {
+function AgentKebabMenu({ onTest, onHistory, onAnalytics }: AgentKebabMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -285,15 +305,11 @@ function AgentKebabMenu({ onTest }: AgentKebabMenuProps) {
           <Play className="mr-2 h-4 w-4" />
           Test
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Copy className="mr-2 h-4 w-4" />
-          Clone
-        </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={onHistory}>
           <History className="mr-2 h-4 w-4" />
           History
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={onAnalytics}>
           <BarChart3 className="mr-2 h-4 w-4" />
           Analytics
         </DropdownMenuItem>

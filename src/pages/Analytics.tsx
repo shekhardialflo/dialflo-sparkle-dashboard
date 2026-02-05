@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,10 +35,13 @@ import {
 import { analyticsData, campaigns, voiceAgents, insightAgents } from '@/data/mockData';
 
 export default function Analytics() {
+  const [searchParams] = useSearchParams();
+  const initialAssistant = searchParams.get('assistant') || 'all';
+  
   const [dateRange, setDateRange] = useState('7');
-  const [assistantFilter, setAssistantFilter] = useState('all');
+  const [assistantFilter, setAssistantFilter] = useState(initialAssistant);
   const [campaignFilter, setCampaignFilter] = useState('all');
-  const [includeVoicemail, setIncludeVoicemail] = useState(false);
+  const [includeTestCalls, setIncludeTestCalls] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
   const formatDuration = (seconds: number) => {
@@ -98,12 +102,12 @@ export default function Analytics() {
 
         <div className="flex items-center gap-2">
           <Switch
-            id="include-voicemail"
-            checked={includeVoicemail}
-            onCheckedChange={setIncludeVoicemail}
+            id="include-test-calls"
+            checked={includeTestCalls}
+            onCheckedChange={setIncludeTestCalls}
           />
-          <Label htmlFor="include-voicemail" className="text-sm">
-            Include Voicemail
+          <Label htmlFor="include-test-calls" className="text-sm">
+            Include Internal Testing Calls
           </Label>
         </div>
       </div>
@@ -137,9 +141,9 @@ export default function Analytics() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">Not Answered</p>
+                <p className="text-xs text-muted-foreground mb-1">Answered</p>
                 <p className="text-xl font-semibold text-foreground">
-                  {analyticsData.notAnswered.toLocaleString()}
+                  {analyticsData.totalConnected.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
@@ -273,16 +277,22 @@ export default function Analytics() {
               <CardHeader>
                 <CardTitle className="text-sm font-medium">Disposition Breakdown</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 {analyticsData.dispositionBreakdown.map((item) => (
-                  <div key={item.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-foreground/80">{item.name}</span>
-                      <span className="text-muted-foreground/70">
-                        {item.count.toLocaleString()} ({item.percentage}%)
-                      </span>
+                  <div key={item.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-foreground/70">{item.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground/50">{item.count.toLocaleString()}</span>
+                        <span className="font-medium text-foreground/80 w-8 text-right">{item.percentage}%</span>
+                      </div>
                     </div>
-                    <Progress value={item.percentage} className="h-1" />
+                    <div className="h-1.5 w-full rounded-full bg-muted/40">
+                      <div 
+                        className="h-full rounded-full bg-primary/70 transition-all" 
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
                   </div>
                 ))}
               </CardContent>
