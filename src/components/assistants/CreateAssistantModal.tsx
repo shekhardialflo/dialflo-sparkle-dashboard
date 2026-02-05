@@ -325,7 +325,7 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                       <SelectValue placeholder="Optional" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       <SelectItem value="english">English</SelectItem>
                       <SelectItem value="hindi">Hindi</SelectItem>
                       <SelectItem value="spanish">Spanish</SelectItem>
