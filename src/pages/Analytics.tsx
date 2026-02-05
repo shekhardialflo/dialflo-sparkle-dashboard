@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -277,33 +277,78 @@ export default function Analytics() {
               <CardHeader>
                 <CardTitle className="text-sm font-medium">Disposition Breakdown</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {analyticsData.dispositionBreakdown.map((item) => (
-                  <div key={item.name} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-foreground/70">{item.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground/50">{item.count.toLocaleString()}</span>
-                        <span className="font-medium text-foreground/80 w-8 text-right">{item.percentage}%</span>
-                      </div>
+              <CardContent>
+                {campaignFilter === 'all' ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 mb-3">
+                      <Info className="h-5 w-5 text-muted-foreground/70" />
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-muted/40">
-                      <div 
-                        className="h-full rounded-full bg-primary/70 transition-all" 
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
+                    <p className="text-sm text-muted-foreground max-w-[280px]">
+                      Disposition breakdown is available when a single campaign is selected (dispositions vary by campaign).
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-3">
+                    {analyticsData.dispositionBreakdown.map((item) => (
+                      <div key={item.name} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-foreground/70">{item.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground/50">{item.count.toLocaleString()}</span>
+                            <span className="font-medium text-foreground/80 w-8 text-right">{item.percentage}%</span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-muted/40">
+                          <div 
+                            className="h-full rounded-full bg-primary/70 transition-all" 
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Top Campaigns */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium">Top Campaigns</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {campaignFilter === 'all' ? 'Top Campaigns' : 'Campaign Performance'}
+                </CardTitle>
               </CardHeader>
               <CardContent>
+                {campaignFilter !== 'all' ? (
+                  <div className="space-y-4">
+                    {(() => {
+                      const selectedCampaign = campaigns.find(c => c.id === campaignFilter);
+                      if (!selectedCampaign) return null;
+                      return (
+                        <>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Attempted</p>
+                              <p className="text-lg font-semibold">{selectedCampaign.attempted.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Connected</p>
+                              <p className="text-lg font-semibold">{selectedCampaign.connected.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Answer Rate</p>
+                              <p className="text-lg font-semibold">{selectedCampaign.answerRate}%</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Conversion</p>
+                              <p className="text-lg font-semibold">{selectedCampaign.conversion}%</p>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -324,6 +369,7 @@ export default function Analytics() {
                     ))}
                   </TableBody>
                 </Table>
+                )}
               </CardContent>
             </Card>
           </div>

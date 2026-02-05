@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, Play, History, BarChart3, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical, Play, History, BarChart3, Trash2, Pencil } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -193,13 +193,13 @@ function VoiceAgentCard({ agent, onTest, onView, onHistory, onAnalytics }: Voice
   const activityCue = getActivityCue(agent.callCount, agent.updatedAt);
 
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-muted/20" onClick={onView}>
+    <Card className="transition-colors hover:bg-muted/20">
       <CardContent className="p-4">
         <div className="mb-4 flex items-start justify-between">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-muted-foreground/80 font-medium text-xs">
             {agent.initials}
           </div>
-          <AgentKebabMenu onTest={onTest} onHistory={onHistory} onAnalytics={onAnalytics} />
+          <AgentKebabMenu onEdit={onView} onTest={onTest} onHistory={onHistory} onAnalytics={onAnalytics} />
         </div>
         <h3 className="mb-2 font-medium text-foreground text-sm">{agent.name}</h3>
         <div className="mb-3 flex flex-wrap gap-1.5">
@@ -240,7 +240,7 @@ function InsightAgentCard({ agent, onView, onHistory, onAnalytics }: InsightAgen
   const activityCue = getActivityCue(agent.callsAnalyzed, agent.updatedAt);
 
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-muted/20" onClick={onView}>
+    <Card className="transition-colors hover:bg-muted/20">
       <CardContent className="p-4">
         <div className="mb-4 flex items-start justify-between">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-muted-foreground/80 font-medium text-xs">
@@ -248,16 +248,20 @@ function InsightAgentCard({ agent, onView, onHistory, onAnalytics }: InsightAgen
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onHistory(); }}>
+              <DropdownMenuItem onClick={onView}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Agent
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onHistory}>
                 <History className="mr-2 h-4 w-4" />
                 History
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAnalytics(); }}>
+              <DropdownMenuItem onClick={onAnalytics}>
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Analytics
               </DropdownMenuItem>
@@ -287,20 +291,25 @@ function InsightAgentCard({ agent, onView, onHistory, onAnalytics }: InsightAgen
 }
 
 interface AgentKebabMenuProps {
+  onEdit: () => void;
   onTest: () => void;
   onHistory: () => void;
   onAnalytics: () => void;
 }
 
-function AgentKebabMenu({ onTest, onHistory, onAnalytics }: AgentKebabMenuProps) {
+function AgentKebabMenu({ onEdit, onTest, onHistory, onAnalytics }: AgentKebabMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onEdit}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit Agent
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={onTest}>
           <Play className="mr-2 h-4 w-4" />
           Test

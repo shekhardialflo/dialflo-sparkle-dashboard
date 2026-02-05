@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Mic, Settings, FileText, Database, Phone, Zap, Code, Keyboard, Wrench, ToggleLeft, FlaskConical } from 'lucide-react';
+import { X, Mic, Settings, FileText, Database, Phone, Code } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -17,6 +17,13 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { type VoiceAgent, type InsightAgent, voices } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface AssistantDetailsDrawerProps {
   open: boolean;
@@ -33,18 +40,27 @@ const sideNavItems = [
   { id: 'number', label: 'Attach Number', icon: Phone },
 ];
 
-const advancedItems = [
-  { id: 'analysis', label: 'Custom Analysis', icon: FlaskConical },
-  { id: 'events', label: 'Event Subscription', icon: Zap },
-  { id: 'api', label: 'API', icon: Code },
-  { id: 'dtmf', label: 'DTMF', icon: Keyboard },
-  { id: 'tools', label: 'Tools', icon: Wrench },
-  { id: 'demo', label: 'Demo Mode', icon: ToggleLeft },
+const llmProviders = [
+  { id: 'default', name: 'Default' },
+  { id: 'openai', name: 'OpenAI' },
+  { id: 'anthropic', name: 'Anthropic' },
+  { id: 'google', name: 'Google' },
+  { id: 'azure', name: 'Azure OpenAI' },
+];
+
+const sttProviders = [
+  { id: 'default', name: 'Default' },
+  { id: 'deepgram', name: 'Deepgram' },
+  { id: 'whisper', name: 'Whisper' },
+  { id: 'google-stt', name: 'Google STT' },
+  { id: 'azure-stt', name: 'Azure STT' },
 ];
 
 export function AssistantDetailsDrawer({ open, onOpenChange, agent }: AssistantDetailsDrawerProps) {
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState('prompt');
+  const [selectedLLM, setSelectedLLM] = useState('default');
+  const [selectedSTT, setSelectedSTT] = useState('default');
 
   if (!agent) return null;
 
@@ -70,26 +86,6 @@ export function AssistantDetailsDrawer({ open, onOpenChange, agent }: AssistantD
                 <h3 className="text-xs font-medium uppercase text-muted-foreground">Settings</h3>
                 <nav className="mt-3 space-y-1">
                   {sideNavItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveSection(item.id)}
-                      className={cn(
-                        'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
-                        activeSection === item.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-              <div>
-                <h3 className="text-xs font-medium uppercase text-muted-foreground">Advanced</h3>
-                <nav className="mt-3 space-y-1">
-                  {advancedItems.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => setActiveSection(item.id)}
@@ -192,6 +188,43 @@ export function AssistantDetailsDrawer({ open, onOpenChange, agent }: AssistantD
                           </div>
                         ))}
                       </div>
+
+                      {/* Providers Section */}
+                      <div className="mt-6 pt-6 border-t border-border">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">Providers</Label>
+                        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label className="text-sm">LLM Provider</Label>
+                            <Select value={selectedLLM} onValueChange={setSelectedLLM}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {llmProviders.map((provider) => (
+                                  <SelectItem key={provider.id} value={provider.id}>
+                                    {provider.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm">Speech-to-Text (STT)</Label>
+                            <Select value={selectedSTT} onValueChange={setSelectedSTT}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {sttProviders.map((provider) => (
+                                  <SelectItem key={provider.id} value={provider.id}>
+                                    {provider.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -250,29 +283,6 @@ export function AssistantDetailsDrawer({ open, onOpenChange, agent }: AssistantD
                           Attach Number
                         </Button>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Advanced sections */}
-                  {activeSection === 'demo' && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <Label>Demo Mode</Label>
-                          <p className="text-sm text-muted-foreground">
-                            Enable demo mode for testing
-                          </p>
-                        </div>
-                        <Switch />
-                      </div>
-                    </div>
-                  )}
-
-                  {(activeSection === 'analysis' || activeSection === 'events' || activeSection === 'api' || activeSection === 'dtmf' || activeSection === 'tools') && (
-                    <div className="rounded-lg border border-dashed p-8 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} configuration coming soon.
-                      </p>
                     </div>
                   )}
                 </>
