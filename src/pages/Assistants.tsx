@@ -27,6 +27,22 @@ import { AssistantDetailsDrawer } from '@/components/assistants/AssistantDetails
 import { TestCallModal } from '@/components/assistants/TestCallModal';
 import { cn } from '@/lib/utils';
 
+// Helper to generate activity cue based on call count and update time
+function getActivityCue(callCount: number, updatedAt: string): { text: string; type: 'active' | 'inactive' | 'review' } {
+  // Parse the updatedAt string for basic logic
+  const isRecent = updatedAt.includes('min') || updatedAt.includes('hour');
+  const hasRecentCalls = callCount > 500;
+  
+  if (hasRecentCalls && isRecent) {
+    return { text: 'Active', type: 'active' };
+  } else if (callCount < 100) {
+    return { text: 'No recent calls', type: 'inactive' };
+  } else if (updatedAt.includes('day') || updatedAt.includes('week')) {
+    return { text: 'Needs review', type: 'review' };
+  }
+  return { text: 'Active', type: 'active' };
+}
+
 export default function Assistants() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -41,13 +57,19 @@ export default function Assistants() {
 
   const filteredVoiceAgents = voiceAgents.filter((agent) => {
     const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === 'all' || agent.direction === typeFilter;
+    const matchesType = typeFilter === 'all' || typeFilter === 'voice';
     return matchesSearch && matchesType;
+  }).sort((a, b) => {
+    if (sortBy === 'calls') return b.callCount - a.callCount;
+    if (sortBy === 'name') return a.name.localeCompare(b.name);
+    return 0; // Default: recently updated (keep original order)
   });
 
-  const filteredInsightAgents = insightAgents.filter((agent) =>
-    agent.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredInsightAgents = insightAgents.filter((agent) => {
+    const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === 'all' || typeFilter === 'insight';
+    return matchesSearch && matchesType;
+  });
 
   const handleTestCall = (agent: VoiceAgent) => {
     setTestCallAgent(agent);
@@ -82,13 +104,12 @@ export default function Assistants() {
           />
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="All Types" />
+              <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="inbound">Inbound</SelectItem>
-              <SelectItem value="outbound">Outbound</SelectItem>
-              <SelectItem value="webcall">Webcall</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="voice">Voice</SelectItem>
+              <SelectItem value="insight">Insight</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -97,8 +118,7 @@ export default function Assistants() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="updated">Recently Updated</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="calls">Call Count</SelectItem>
+              <SelectItem value="calls">Most Calls</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -192,10 +212,11 @@ interface VoiceAgentCardProps {
 
 function VoiceAgentCard({ agent, viewMode, onTest, onView }: VoiceAgentCardProps) {
   const directionStatus = agent.direction === 'inbound' ? 'info' : agent.direction === 'outbound' ? 'success' : 'neutral';
+  const activityCue = getActivityCue(agent.callCount, agent.updatedAt);
 
   if (viewMode === 'list') {
     return (
-      <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={onView}>
+      <Card className="cursor-pointer shadow-subtle transition-shadow hover:shadow-md" onClick={onView}>
         <CardContent className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-medium">
@@ -210,9 +231,16 @@ function VoiceAgentCard({ agent, viewMode, onTest, onView }: VoiceAgentCardProps
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right text-sm text-muted-foreground">
-              <div>{agent.callCount.toLocaleString()} calls</div>
-              <div>Updated {agent.updatedAt}</div>
+            <div className="text-right">
+              <div className="text-sm text-muted-foreground">{agent.callCount.toLocaleString()} calls · Updated {agent.updatedAt}</div>
+              <div className={cn(
+                "text-xs mt-0.5",
+                activityCue.type === 'active' && "text-[hsl(var(--status-success))]",
+                activityCue.type === 'inactive' && "text-muted-foreground",
+                activityCue.type === 'review' && "text-[hsl(var(--status-warning))]"
+              )}>
+                {activityCue.text}
+              </div>
             </div>
             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onTest(); }}>
               Test
@@ -225,7 +253,7 @@ function VoiceAgentCard({ agent, viewMode, onTest, onView }: VoiceAgentCardProps
   }
 
   return (
-    <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={onView}>
+    <Card className="cursor-pointer shadow-subtle transition-shadow hover:shadow-md" onClick={onView}>
       <CardContent className="p-4">
         <div className="mb-3 flex items-start justify-between">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-medium">
@@ -241,6 +269,14 @@ function VoiceAgentCard({ agent, viewMode, onTest, onView }: VoiceAgentCardProps
         <div className="mb-4 flex items-center justify-between text-xs text-muted-foreground">
           <span>{agent.callCount.toLocaleString()} calls</span>
           <span>Updated {agent.updatedAt}</span>
+        </div>
+        <div className={cn(
+          "mb-3 text-xs",
+          activityCue.type === 'active' && "text-[hsl(var(--status-success))]",
+          activityCue.type === 'inactive' && "text-muted-foreground",
+          activityCue.type === 'review' && "text-[hsl(var(--status-warning))]"
+        )}>
+          {activityCue.text}
         </div>
         <Button
           variant="outline"
@@ -266,9 +302,11 @@ interface InsightAgentCardProps {
 }
 
 function InsightAgentCard({ agent, viewMode, onView }: InsightAgentCardProps) {
+  const activityCue = getActivityCue(agent.callsAnalyzed, agent.updatedAt);
+
   if (viewMode === 'list') {
     return (
-      <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={onView}>
+      <Card className="cursor-pointer shadow-subtle transition-shadow hover:shadow-md" onClick={onView}>
         <CardContent className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground font-medium">
@@ -282,9 +320,16 @@ function InsightAgentCard({ agent, viewMode, onView }: InsightAgentCardProps) {
               </div>
             </div>
           </div>
-          <div className="text-right text-sm text-muted-foreground">
-            <div>{agent.callsAnalyzed.toLocaleString()} calls analyzed</div>
-            <div>Updated {agent.updatedAt}</div>
+          <div className="text-right">
+            <div className="text-sm text-muted-foreground">{agent.callsAnalyzed.toLocaleString()} calls analyzed · Updated {agent.updatedAt}</div>
+            <div className={cn(
+              "text-xs mt-0.5",
+              activityCue.type === 'active' && "text-[hsl(var(--status-success))]",
+              activityCue.type === 'inactive' && "text-muted-foreground",
+              activityCue.type === 'review' && "text-[hsl(var(--status-warning))]"
+            )}>
+              {activityCue.text}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -292,7 +337,7 @@ function InsightAgentCard({ agent, viewMode, onView }: InsightAgentCardProps) {
   }
 
   return (
-    <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={onView}>
+    <Card className="cursor-pointer shadow-subtle transition-shadow hover:shadow-md" onClick={onView}>
       <CardContent className="p-4">
         <div className="mb-3 flex items-start justify-between">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground font-medium">
@@ -326,10 +371,18 @@ function InsightAgentCard({ agent, viewMode, onView }: InsightAgentCardProps) {
           <StatusBadge status="info">Insight Agent</StatusBadge>
           <StatusBadge status="neutral">{agent.fields.length} fields</StatusBadge>
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="mb-2 text-xs text-muted-foreground">
           <span>{agent.callsAnalyzed.toLocaleString()} calls analyzed</span>
           <span className="mx-2">•</span>
           <span>Updated {agent.updatedAt}</span>
+        </div>
+        <div className={cn(
+          "text-xs",
+          activityCue.type === 'active' && "text-[hsl(var(--status-success))]",
+          activityCue.type === 'inactive' && "text-muted-foreground",
+          activityCue.type === 'review' && "text-[hsl(var(--status-warning))]"
+        )}>
+          {activityCue.text}
         </div>
       </CardContent>
     </Card>
