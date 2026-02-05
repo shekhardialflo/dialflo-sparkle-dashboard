@@ -6,12 +6,12 @@
 
 @layer base {
   :root {
-    /* Core backgrounds - warm, calm */
-    --background: 40 20% 98%; /* #FAFAF9 warm off-white */
+  /* Core backgrounds - warm, calm, Notion-like */
+  --background: 40 15% 97%; /* #F7F7F5 warmer off-white */
     --foreground: 220 13% 10%; /* #111827 charcoal */
 
     /* Cards */
-    --card: 0 0% 100%;
+  --card: 0 0% 100%; /* Pure white */
     --card-foreground: 220 13% 10%;
 
     /* Popovers/Modals */
@@ -39,21 +39,21 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders & Inputs - very light */
-    --border: 220 13% 91%; /* #E5E7EB */
-    --input: 220 13% 91%;
+  --border: 220 8% 93%; /* Even lighter, almost invisible */
+  --input: 220 8% 93%;
     --ring: 220 13% 18%;
 
-    --radius: 0.625rem; /* 10px for inputs */
-    --radius-card: 0.75rem; /* 12px for cards */
+  --radius: 0.5rem; /* 8px for inputs */
+  --radius-card: 0.625rem; /* 10px for cards */
 
     /* Sidebar */
     --sidebar-background: 40 20% 98%;
     --sidebar-foreground: 218 11% 50%;
     --sidebar-primary: 220 13% 18%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 9% 96%;
+  --sidebar-accent: 220 6% 97%;
     --sidebar-accent-foreground: 220 13% 10%;
-    --sidebar-border: 220 13% 91%;
+  --sidebar-border: 220 8% 93%;
     --sidebar-ring: 220 13% 18%;
 
     /* Status colors - low saturation, calm */
@@ -101,7 +101,7 @@
     --input: 220 13% 22%;
     --ring: 220 13% 90%;
 
-    --sidebar-background: 220 13% 10%;
+  --sidebar-background: 220 13% 8%;
     --sidebar-foreground: 40 20% 98%;
     --sidebar-primary: 220 13% 90%;
     --sidebar-primary-foreground: 220 13% 10%;
@@ -149,7 +149,12 @@
 
   /* Card shadow utility - extremely subtle */
   .card-shadow {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+
+  /* Softer shadow for cards */
+  .shadow-subtle {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   }
 
   /* Text hierarchy */

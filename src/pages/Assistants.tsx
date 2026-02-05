@@ -177,10 +177,10 @@ function VoiceAgentCard({ agent, onTest, onView }: VoiceAgentCardProps) {
   const activityCue = getActivityCue(agent.callCount, agent.updatedAt);
 
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-accent/30" onClick={onView}>
-      <CardContent className="p-5">
+    <Card className="cursor-pointer transition-colors hover:bg-muted/20" onClick={onView}>
+      <CardContent className="p-4">
         <div className="mb-4 flex items-start justify-between">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground font-medium text-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-muted-foreground/80 font-medium text-xs">
             {agent.initials}
           </div>
           <AgentKebabMenu onTest={onTest} />
@@ -190,21 +190,17 @@ function VoiceAgentCard({ agent, onTest, onView }: VoiceAgentCardProps) {
           <StatusBadge status="neutral">{agent.direction}</StatusBadge>
           <StatusBadge status="neutral">{agent.language}</StatusBadge>
         </div>
-        <div className="mb-2 text-xs text-muted-foreground">
-          {agent.callCount.toLocaleString()} calls · Updated {agent.updatedAt}
-        </div>
-        <div className={cn(
-          "mb-4 text-xs",
-          activityCue.type === 'active' && "text-status-success",
-          activityCue.type === 'inactive' && "text-muted-foreground/70",
-          activityCue.type === 'review' && "text-status-warning"
-        )}>
-          {activityCue.text}
+        <div className="mb-4 text-[11px] text-muted-foreground/70">
+          {agent.callCount.toLocaleString()} calls · Updated {agent.updatedAt} · <span className={cn(
+            activityCue.type === 'active' && "text-muted-foreground",
+            activityCue.type === 'inactive' && "text-muted-foreground/50",
+            activityCue.type === 'review' && "text-muted-foreground"
+          )}>{activityCue.text}</span>
         </div>
         <Button
           variant="outline"
           size="sm"
-          className="w-full"
+          className="w-full text-xs"
           onClick={(e) => {
             e.stopPropagation();
             onTest();
@@ -226,10 +222,10 @@ function InsightAgentCard({ agent, onView }: InsightAgentCardProps) {
   const activityCue = getActivityCue(agent.callsAnalyzed, agent.updatedAt);
 
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-accent/30" onClick={onView}>
-      <CardContent className="p-5">
+    <Card className="cursor-pointer transition-colors hover:bg-muted/20" onClick={onView}>
+      <CardContent className="p-4">
         <div className="mb-4 flex items-start justify-between">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground font-medium text-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-muted-foreground/80 font-medium text-xs">
             {agent.initials}
           </div>
           <DropdownMenu>
@@ -260,16 +256,12 @@ function InsightAgentCard({ agent, onView }: InsightAgentCardProps) {
           <StatusBadge status="neutral">Insight Agent</StatusBadge>
           <StatusBadge status="neutral">{agent.fields.length} fields</StatusBadge>
         </div>
-        <div className="mb-2 text-xs text-muted-foreground">
-          {agent.callsAnalyzed.toLocaleString()} calls analyzed · Updated {agent.updatedAt}
-        </div>
-        <div className={cn(
-          "text-xs",
-          activityCue.type === 'active' && "text-status-success",
-          activityCue.type === 'inactive' && "text-muted-foreground/70",
-          activityCue.type === 'review' && "text-status-warning"
-        )}>
-          {activityCue.text}
+        <div className="text-[11px] text-muted-foreground/70">
+          {agent.callsAnalyzed.toLocaleString()} calls analyzed · Updated {agent.updatedAt} · <span className={cn(
+            activityCue.type === 'active' && "text-muted-foreground",
+            activityCue.type === 'inactive' && "text-muted-foreground/50",
+            activityCue.type === 'review' && "text-muted-foreground"
+          )}>{activityCue.text}</span>
         </div>
       </CardContent>
     </Card>

@@ -8,11 +8,11 @@ interface StatusBadgeProps {
 
 // Low saturation status colors - calm, Notion-inspired
 const statusStyles = {
-  success: 'bg-[hsl(var(--status-success-bg))] text-[hsl(var(--status-success))] border-transparent',
-  warning: 'bg-[hsl(var(--status-warning-bg))] text-[hsl(var(--status-warning))] border-transparent',
-  error: 'bg-[hsl(var(--status-error-bg))] text-[hsl(var(--status-error))] border-transparent',
-  info: 'bg-[hsl(var(--status-info-bg))] text-[hsl(var(--status-info))] border-transparent',
-  neutral: 'bg-muted text-muted-foreground border-transparent',
+  success: 'bg-[hsl(142_40%_94%)] text-[hsl(142_50%_35%)] border-transparent',
+  warning: 'bg-[hsl(40_50%_94%)] text-[hsl(32_70%_40%)] border-transparent',
+  error: 'bg-[hsl(0_50%_95%)] text-[hsl(0_55%_45%)] border-transparent',
+  info: 'bg-[hsl(217_50%_95%)] text-[hsl(217_60%_50%)] border-transparent',
+  neutral: 'bg-muted/70 text-muted-foreground border-transparent',
 };
 
 export function StatusBadge({ status, children, className }: StatusBadgeProps) {
