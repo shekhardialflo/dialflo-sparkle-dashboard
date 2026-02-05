@@ -26,14 +26,14 @@ export function AppSidebar() {
   const isCollapsed = state === 'collapsed';
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
-      <SidebarHeader className="p-4">
+    <Sidebar collapsible="icon" className="border-r border-border bg-background">
+      <SidebarHeader className="p-4 pb-6">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background font-bold text-sm">
             D
           </div>
           {!isCollapsed && (
-            <span className="font-semibold text-foreground text-lg">Dialflo</span>
+            <span className="font-semibold text-foreground text-base tracking-tight">Dialflo</span>
           )}
         </div>
       </SidebarHeader>
@@ -48,8 +48,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === '/'}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                      activeClassName="bg-accent text-foreground font-medium border-l-2 border-primary"
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      activeClassName="bg-accent text-foreground font-medium relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-0.5 before:bg-foreground before:rounded-full"
                     >
                       <item.icon className="h-5 w-5 shrink-0" />
                       {!isCollapsed && <span>{item.title}</span>}

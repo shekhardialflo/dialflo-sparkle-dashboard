@@ -2,116 +2,117 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dialflo Design System - Warm, Notion-inspired SaaS dashboard */
+/* Dialflo Design System - Minimal, calm, Notion-inspired dashboard */
 
 @layer base {
   :root {
-    /* Core backgrounds */
-    --background: 40 12% 96%; /* #F7F7F5 warm off-white */
-    --foreground: 215 19% 14%; /* #1F2328 */
+    /* Core backgrounds - warm, calm */
+    --background: 40 20% 98%; /* #FAFAF9 warm off-white */
+    --foreground: 220 13% 10%; /* #111827 charcoal */
 
     /* Cards */
     --card: 0 0% 100%;
-    --card-foreground: 215 19% 14%;
+    --card-foreground: 220 13% 10%;
 
     /* Popovers/Modals */
     --popover: 0 0% 100%;
-    --popover-foreground: 215 19% 14%;
+    --popover-foreground: 220 13% 10%;
 
-    /* Primary - Notion blue accent */
-    --primary: 218 79% 56%; /* #2F6FED */
+    /* Primary - Charcoal (single primary accent) */
+    --primary: 220 13% 18%; /* #1F2937 */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - subtle gray */
-    --secondary: 40 12% 96%;
-    --secondary-foreground: 215 19% 14%;
+    /* Secondary - muted indigo (very limited use) */
+    --secondary: 243 75% 59%; /* #4F46E5 */
+    --secondary-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 40 10% 94%;
-    --muted-foreground: 220 9% 46%; /* #6B7280 */
+    --muted: 220 9% 96%;
+    --muted-foreground: 218 11% 50%; /* #6B7280 */
 
     /* Accent */
-    --accent: 40 10% 94%;
-    --accent-foreground: 215 19% 14%;
+    --accent: 220 9% 96%;
+    --accent-foreground: 220 13% 10%;
 
     /* Destructive */
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%; /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders & Inputs */
-    --border: 40 10% 91%; /* #E9E9E7 */
-    --input: 40 10% 91%;
-    --ring: 218 79% 56%;
+    /* Borders & Inputs - very light */
+    --border: 220 13% 91%; /* #E5E7EB */
+    --input: 220 13% 91%;
+    --ring: 220 13% 18%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem; /* 10px for inputs */
+    --radius-card: 0.75rem; /* 12px for cards */
 
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 9% 46%;
-    --sidebar-primary: 218 79% 56%;
+    --sidebar-background: 40 20% 98%;
+    --sidebar-foreground: 218 11% 50%;
+    --sidebar-primary: 220 13% 18%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 10% 94%;
-    --sidebar-accent-foreground: 215 19% 14%;
-    --sidebar-border: 40 10% 91%;
-    --sidebar-ring: 218 79% 56%;
+    --sidebar-accent: 220 9% 96%;
+    --sidebar-accent-foreground: 220 13% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 220 13% 18%;
 
-    /* Status colors - soft semantic */
-    --status-success: 142 76% 36%;
-    --status-success-bg: 142 50% 95%;
-    --status-warning: 45 93% 47%;
-    --status-warning-bg: 45 80% 95%;
-    --status-error: 0 72% 51%;
-    --status-error-bg: 0 84% 95%;
-    --status-info: 199 89% 48%;
-    --status-info-bg: 199 80% 95%;
+    /* Status colors - low saturation, calm */
+    --status-success: 142 71% 35%; /* #16A34A muted green */
+    --status-success-bg: 142 45% 94%;
+    --status-warning: 32 95% 44%; /* #D97706 */
+    --status-warning-bg: 40 60% 94%;
+    --status-error: 0 72% 51%; /* #DC2626 */
+    --status-error-bg: 0 70% 95%;
+    --status-info: 217 91% 60%; /* Blue for voicemail */
+    --status-info-bg: 217 70% 95%;
 
-    /* Chart colors */
-    --chart-gray: 220 9% 70%;
-    --chart-accent: 218 79% 56%;
-    --chart-accent-dark: 218 79% 40%;
+    /* Chart colors - charcoal primary, muted indigo secondary */
+    --chart-primary: 220 13% 18%; /* Charcoal - attempted */
+    --chart-secondary: 243 75% 59%; /* Muted indigo - connected */
+    --chart-tertiary: 220 13% 30%; /* Darker charcoal - dashed conversion */
   }
 
   .dark {
-    --background: 215 19% 14%;
-    --foreground: 40 12% 96%;
+    --background: 220 13% 10%;
+    --foreground: 40 20% 98%;
 
     --card: 220 13% 18%;
-    --card-foreground: 40 12% 96%;
+    --card-foreground: 40 20% 98%;
 
     --popover: 220 13% 18%;
-    --popover-foreground: 40 12% 96%;
+    --popover-foreground: 40 20% 98%;
 
-    --primary: 218 79% 56%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 220 13% 90%;
+    --primary-foreground: 220 13% 10%;
 
-    --secondary: 220 13% 18%;
-    --secondary-foreground: 40 12% 96%;
+    --secondary: 243 75% 59%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 220 13% 18%;
     --muted-foreground: 215 20% 65%;
 
     --accent: 220 13% 18%;
-    --accent-foreground: 40 12% 96%;
+    --accent-foreground: 40 20% 98%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 22%;
     --input: 220 13% 22%;
-    --ring: 218 79% 56%;
+    --ring: 220 13% 90%;
 
-    --sidebar-background: 215 19% 14%;
-    --sidebar-foreground: 40 12% 96%;
-    --sidebar-primary: 218 79% 56%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-background: 220 13% 10%;
+    --sidebar-foreground: 40 20% 98%;
+    --sidebar-primary: 220 13% 90%;
+    --sidebar-primary-foreground: 220 13% 10%;
     --sidebar-accent: 220 13% 18%;
-    --sidebar-accent-foreground: 40 12% 96%;
+    --sidebar-accent-foreground: 40 20% 98%;
     --sidebar-border: 220 13% 22%;
-    --sidebar-ring: 218 79% 56%;
+    --sidebar-ring: 220 13% 90%;
 
-    --chart-gray: 220 9% 50%;
-    --chart-accent: 218 79% 56%;
-    --chart-accent-dark: 218 79% 70%;
+    --chart-primary: 220 13% 80%;
+    --chart-secondary: 243 75% 70%;
+    --chart-tertiary: 220 13% 60%;
   }
 }
 
@@ -123,11 +124,13 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-size: 14px;
+    line-height: 1.5;
   }
 }
 
 @layer utilities {
-  /* Status pill utilities */
+  /* Status pill utilities - low saturation */
   .status-success {
     @apply bg-[hsl(var(--status-success-bg))] text-[hsl(var(--status-success))];
   }
@@ -140,9 +143,26 @@
   .status-info {
     @apply bg-[hsl(var(--status-info-bg))] text-[hsl(var(--status-info))];
   }
+  .status-neutral {
+    @apply bg-muted text-muted-foreground;
+  }
 
-  /* Card shadow utility */
+  /* Card shadow utility - extremely subtle */
   .card-shadow {
-    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Text hierarchy */
+  .text-page-title {
+    @apply text-[28px] font-semibold leading-tight tracking-tight text-foreground;
+  }
+  .text-section-title {
+    @apply text-base font-semibold text-foreground;
+  }
+  .text-body {
+    @apply text-sm text-foreground;
+  }
+  .text-helper {
+    @apply text-xs text-muted-foreground;
   }
 }

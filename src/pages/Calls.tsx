@@ -236,7 +236,7 @@ export default function Calls() {
         </div>
       </div>
 
-      <Card className="shadow-subtle">
+      <Card>
         <Table>
           <TableHeader>
             <TableRow>
