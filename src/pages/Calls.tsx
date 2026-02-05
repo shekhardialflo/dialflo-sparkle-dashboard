@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Download, Settings2, Calendar, X, Play, RefreshCw, FileJson, Volume2, FileText } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
@@ -54,9 +55,12 @@ const allColumns = [
 ];
 
 export default function Calls() {
+  const [searchParams] = useSearchParams();
+  const initialAssistant = searchParams.get('assistant') || 'all';
+  
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [assistantFilter, setAssistantFilter] = useState('all');
+  const [assistantFilter, setAssistantFilter] = useState(initialAssistant);
   const [campaignFilter, setCampaignFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [directionFilter, setDirectionFilter] = useState('all');
