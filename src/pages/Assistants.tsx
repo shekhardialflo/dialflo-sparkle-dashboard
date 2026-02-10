@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, Play, History, BarChart3, Trash2, Pencil, Lightbulb } from 'lucide-react';
+import { Plus, MoreVertical, Play, History, BarChart3, Trash2, Pencil, Lightbulb, HeartPulse } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ import { CreateAssistantModal } from '@/components/assistants/CreateAssistantMod
 import { AssistantDetailsDrawer } from '@/components/assistants/AssistantDetailsDrawer';
 import { TestCallModal } from '@/components/assistants/TestCallModal';
 import { InsightAgentModal } from '@/components/assistants/InsightAgentModal';
+import { AgentHealthDrawer } from '@/components/assistants/AgentHealthDrawer';
 import { cn } from '@/lib/utils';
 
 function getStatusBadgeVariant(status: string): 'success' | 'warning' | 'neutral' {
@@ -45,6 +46,8 @@ export default function Assistants() {
   const [testCallAgent, setTestCallAgent] = useState<VoiceAgent | null>(null);
   const [insightModalOpen, setInsightModalOpen] = useState(false);
   const [insightAgent, setInsightAgent] = useState<VoiceAgent | null>(null);
+  const [healthOpen, setHealthOpen] = useState(false);
+  const [healthAgent, setHealthAgent] = useState<VoiceAgent | null>(null);
 
   const filteredAgents = voiceAgents
     .filter((agent) => {
@@ -78,6 +81,11 @@ export default function Assistants() {
   const handleInsightAgent = (agent: VoiceAgent) => {
     setInsightAgent(agent);
     setInsightModalOpen(true);
+  };
+
+  const handleHealth = (agent: VoiceAgent) => {
+    setHealthAgent(agent);
+    setHealthOpen(true);
   };
 
   return (
@@ -132,6 +140,7 @@ export default function Assistants() {
             onHistory={() => handleHistory(agent.id)}
             onAnalytics={() => handleAnalytics(agent.id)}
             onInsight={() => handleInsightAgent(agent)}
+            onHealth={() => handleHealth(agent)}
           />
         ))}
       </div>
@@ -152,6 +161,11 @@ export default function Assistants() {
         onOpenChange={setInsightModalOpen}
         agent={insightAgent}
       />
+      <AgentHealthDrawer
+        open={healthOpen}
+        onOpenChange={setHealthOpen}
+        agent={healthAgent}
+      />
     </div>
   );
 }
@@ -163,9 +177,10 @@ interface VoiceAgentCardProps {
   onHistory: () => void;
   onAnalytics: () => void;
   onInsight: () => void;
+  onHealth: () => void;
 }
 
-function VoiceAgentCard({ agent, onTest, onEdit, onHistory, onAnalytics, onInsight }: VoiceAgentCardProps) {
+function VoiceAgentCard({ agent, onTest, onEdit, onHistory, onAnalytics, onInsight, onHealth }: VoiceAgentCardProps) {
   return (
     <Card className="transition-colors hover:bg-muted/20">
       <CardContent className="p-4">
@@ -195,6 +210,10 @@ function VoiceAgentCard({ agent, onTest, onEdit, onHistory, onAnalytics, onInsig
               <DropdownMenuItem onClick={onAnalytics}>
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Analytics
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onHealth}>
+                <HeartPulse className="mr-2 h-4 w-4" />
+                Health
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onInsight}>
