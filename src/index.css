@@ -73,46 +73,68 @@
   }
 
   .dark {
-    --background: 220 13% 10%;
-    --foreground: 40 20% 98%;
+    /* App background: #0F1216 */
+    --background: 213 22% 7%;
+    /* Primary text: #E6E8EB */
+    --foreground: 216 10% 91%;
 
-    --card: 220 13% 18%;
-    --card-foreground: 40 20% 98%;
+    /* Card background: #1A1F26 */
+    --card: 215 19% 13%;
+    --card-foreground: 216 10% 91%;
 
-    --popover: 220 13% 18%;
-    --popover-foreground: 40 20% 98%;
+    /* Popover matches card */
+    --popover: 215 19% 13%;
+    --popover-foreground: 216 10% 91%;
 
-    --primary: 220 13% 90%;
-    --primary-foreground: 220 13% 10%;
+    /* Primary accent – existing indigo */
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 243 75% 59%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary – subtle surface */
+    --secondary: 218 23% 16%;
+    --secondary-foreground: 216 10% 91%;
 
-    --muted: 220 13% 18%;
-    --muted-foreground: 215 20% 65%;
+    /* Muted text: #7B8291 */
+    --muted: 218 23% 16%;
+    --muted-foreground: 220 10% 53%;
 
-    --accent: 220 13% 18%;
-    --accent-foreground: 40 20% 98%;
+    /* Accent / hover: #202634 */
+    --accent: 218 23% 16%;
+    --accent-foreground: 216 10% 91%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
+    /* Destructive – low-sat red */
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 216 10% 91%;
 
-    --border: 220 13% 22%;
-    --input: 220 13% 22%;
-    --ring: 220 13% 90%;
+    /* Border: rgba(255,255,255,0.06) approximation */
+    --border: 220 15% 15%;
+    --input: 215 19% 13%;
+    --ring: 243 75% 59%;
 
-  --sidebar-background: 220 13% 8%;
-    --sidebar-foreground: 40 20% 98%;
-    --sidebar-primary: 220 13% 90%;
-    --sidebar-primary-foreground: 220 13% 10%;
-    --sidebar-accent: 220 13% 18%;
-    --sidebar-accent-foreground: 40 20% 98%;
-    --sidebar-border: 220 13% 22%;
-    --sidebar-ring: 220 13% 90%;
+    /* Sidebar: #12161C */
+    --sidebar-background: 216 21% 9%;
+    --sidebar-foreground: 219 11% 67%;
+    --sidebar-primary: 243 75% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 218 23% 16%;
+    --sidebar-accent-foreground: 216 10% 91%;
+    --sidebar-border: 220 15% 15%;
+    --sidebar-ring: 243 75% 59%;
 
-    --chart-primary: 220 13% 80%;
-    --chart-secondary: 243 75% 70%;
-    --chart-tertiary: 220 13% 60%;
+    /* Status – low-saturation on dark backgrounds */
+    --status-success: 142 50% 45%;
+    --status-success-bg: 142 30% 12%;
+    --status-warning: 32 60% 50%;
+    --status-warning-bg: 32 30% 12%;
+    --status-error: 0 55% 50%;
+    --status-error-bg: 0 30% 12%;
+    --status-info: 217 60% 55%;
+    --status-info-bg: 217 30% 12%;
+
+    /* Charts */
+    --chart-primary: 216 10% 80%;
+    --chart-secondary: 243 75% 65%;
+    --chart-tertiary: 220 10% 55%;
   }
 }
 
@@ -147,14 +169,20 @@
     @apply bg-muted text-muted-foreground;
   }
 
-  /* Card shadow utility - extremely subtle */
+  /* Card shadow utility */
   .card-shadow {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+  .dark .card-shadow {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 
   /* Softer shadow for cards */
   .shadow-subtle {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+  .dark .shadow-subtle {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 
   /* Text hierarchy */
