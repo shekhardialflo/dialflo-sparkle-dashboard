@@ -1,20 +1,36 @@
 // Mock data for Dialflo Voice Assistant Hub
 
+export type AgentMode = 'inbound' | 'outbound' | 'dual';
+export type AgentStatus = 'active' | 'inactive' | 'draft';
+
+export interface InsightConfig {
+  enabled: boolean;
+  analysisPrompt: string;
+  fields: { name: string; type: 'string' | 'number' | 'boolean' | 'enum' }[];
+  destinations: { type: 'slack' | 'webhook'; url: string; enabled: boolean }[];
+}
+
 export interface VoiceAgent {
   id: string;
   name: string;
   initials: string;
   type: 'voice';
   direction: 'inbound' | 'outbound' | 'webcall';
+  agentMode: AgentMode;
   language: string;
-  secondaryLanguage?: string;
-  callCount: number;
+  status: AgentStatus;
   updatedAt: string;
   firstMessage: string;
   systemPrompt: string;
   isInterruptible: boolean;
   voiceId: string;
   voiceName: string;
+  linkedAgentId?: string; // for dual mode pairs
+  syncWithLinked?: boolean;
+  insightConfig?: InsightConfig;
+  llmProvider?: string;
+  sttProvider?: string;
+  ttsProvider?: string;
 }
 
 export interface InsightAgent {
@@ -110,15 +126,29 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'SQ',
     type: 'voice',
     direction: 'outbound',
+    agentMode: 'outbound',
     language: 'English',
-    secondaryLanguage: 'Hindi',
-    callCount: 2341,
+    status: 'active',
     updatedAt: '1 hour ago',
     firstMessage: 'Hi, this is Sarah from TechCorp. Am I speaking with {{name}}?',
     systemPrompt: 'You are a professional sales qualification agent. Your goal is to qualify leads based on budget, authority, need, and timeline.',
     isInterruptible: true,
     voiceId: 'v1',
     voiceName: 'Sarah',
+    llmProvider: 'openai',
+    sttProvider: 'deepgram',
+    ttsProvider: 'elevenlabs',
+    insightConfig: {
+      enabled: true,
+      analysisPrompt: 'Analyze the sales call and extract key information about the prospect\'s interest level, objections raised, and next steps agreed upon.',
+      fields: [
+        { name: 'interest_level', type: 'enum' },
+        { name: 'budget_mentioned', type: 'boolean' },
+        { name: 'main_objection', type: 'string' },
+        { name: 'follow_up_date', type: 'string' },
+      ],
+      destinations: [{ type: 'slack', url: '#sales-insights', enabled: true }],
+    },
   },
   {
     id: 'va2',
@@ -126,14 +156,29 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'CS',
     type: 'voice',
     direction: 'inbound',
+    agentMode: 'inbound',
     language: 'English',
-    callCount: 5672,
+    status: 'active',
     updatedAt: '30 mins ago',
     firstMessage: 'Thank you for calling TechCorp support. How can I help you today?',
     systemPrompt: 'You are a helpful customer support agent. Help customers with their issues professionally and efficiently.',
     isInterruptible: true,
     voiceId: 'v2',
     voiceName: 'James',
+    llmProvider: 'anthropic',
+    sttProvider: 'deepgram',
+    ttsProvider: 'elevenlabs',
+    insightConfig: {
+      enabled: true,
+      analysisPrompt: 'Extract support ticket details including issue type, severity, resolution status, and customer satisfaction.',
+      fields: [
+        { name: 'issue_type', type: 'string' },
+        { name: 'severity', type: 'enum' },
+        { name: 'resolved', type: 'boolean' },
+        { name: 'csat_score', type: 'number' },
+      ],
+      destinations: [],
+    },
   },
   {
     id: 'va3',
@@ -141,8 +186,9 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'AS',
     type: 'voice',
     direction: 'outbound',
+    agentMode: 'outbound',
     language: 'English',
-    callCount: 1289,
+    status: 'active',
     updatedAt: '2 hours ago',
     firstMessage: 'Hello {{name}}, I\'m calling to schedule your consultation with our team.',
     systemPrompt: 'You are an appointment scheduling assistant. Book meetings with qualified prospects.',
@@ -156,9 +202,9 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'SB',
     type: 'voice',
     direction: 'outbound',
+    agentMode: 'outbound',
     language: 'Hindi',
-    secondaryLanguage: 'English',
-    callCount: 892,
+    status: 'inactive',
     updatedAt: '1 day ago',
     firstMessage: 'नमस्ते {{name}}, हम आपकी प्रतिक्रिया लेना चाहते हैं।',
     systemPrompt: 'Conduct customer satisfaction surveys in Hindi. Be polite and collect NPS scores.',
@@ -172,8 +218,9 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'LN',
     type: 'voice',
     direction: 'outbound',
+    agentMode: 'outbound',
     language: 'English',
-    callCount: 456,
+    status: 'active',
     updatedAt: '3 hours ago',
     firstMessage: 'Hi {{name}}, following up on your interest in our services.',
     systemPrompt: 'Nurture warm leads with personalized follow-ups. Build rapport and move towards conversion.',
@@ -187,8 +234,9 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'PR',
     type: 'voice',
     direction: 'outbound',
+    agentMode: 'outbound',
     language: 'English',
-    callCount: 3421,
+    status: 'active',
     updatedAt: '45 mins ago',
     firstMessage: 'Hello {{name}}, this is a reminder about your upcoming payment.',
     systemPrompt: 'Remind customers about pending payments professionally. Offer payment options and collect commitments.',
@@ -202,8 +250,9 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'WC',
     type: 'voice',
     direction: 'webcall',
+    agentMode: 'inbound',
     language: 'English',
-    callCount: 234,
+    status: 'draft',
     updatedAt: '5 hours ago',
     firstMessage: 'Welcome to our website! How can I assist you today?',
     systemPrompt: 'Help website visitors with product questions and guide them through the purchase process.',
@@ -217,14 +266,17 @@ export const voiceAgents: VoiceAgent[] = [
     initials: 'DS',
     type: 'voice',
     direction: 'outbound',
+    agentMode: 'dual',
     language: 'English',
-    callCount: 678,
+    status: 'active',
     updatedAt: '2 days ago',
     firstMessage: 'Hi {{name}}, I\'d love to show you a demo of our platform.',
     systemPrompt: 'Schedule product demos with interested prospects. Qualify them during the conversation.',
     isInterruptible: true,
     voiceId: 'v4',
     voiceName: 'Michael',
+    linkedAgentId: 'va8-inbound',
+    syncWithLinked: true,
   },
 ];
 
