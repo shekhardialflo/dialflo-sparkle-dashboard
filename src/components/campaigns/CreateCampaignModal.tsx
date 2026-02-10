@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { voiceAgents, contactLists, insightAgents, phoneNumbers } from '@/data/mockData';
+import { voiceAgents, contactLists } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { RetryStrategy, defaultRetryStrategy } from '@/types/retryStrategy';
@@ -50,11 +50,11 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
   // Form state
   const [name, setName] = useState('');
   const [selectedAssistant, setSelectedAssistant] = useState('');
-  const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
+  
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedList, setSelectedList] = useState('');
-  const [selectedInsightAgent, setSelectedInsightAgent] = useState('');
+  
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [retryStrategy, setRetryStrategy] = useState<RetryStrategy>(defaultRetryStrategy);
 
@@ -62,11 +62,11 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     setCurrentStep(0);
     setName('');
     setSelectedAssistant('');
-    setSelectedNumbers([]);
+    
     setStartDate('');
     setEndDate('');
     setSelectedList('');
-    setSelectedInsightAgent('');
+    
     setUploadedFile(null);
     setRetryStrategy(defaultRetryStrategy);
   };
@@ -166,25 +166,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Phone Numbers</Label>
-                <Select
-                  value={selectedNumbers[0] || ''}
-                  onValueChange={(value) => setSelectedNumbers([value])}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select numbers" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {phoneNumbers.map((num) => (
-                      <SelectItem key={num.id} value={num.id}>
-                        {num.number} ({num.label})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Start Date *</Label>
@@ -202,39 +183,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                     onChange={(e) => setEndDate(e.target.value)}
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Select List</Label>
-                <Select value={selectedList} onValueChange={setSelectedList}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a list or upload new" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {contactLists.map((list) => (
-                      <SelectItem key={list.id} value={list.id}>
-                        {list.name} ({list.records.toLocaleString()} records)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Auto-run Insights (Optional)</Label>
-                <Select value={selectedInsightAgent} onValueChange={setSelectedInsightAgent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select insight agent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {insightAgents.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           )}
@@ -387,12 +335,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                           endDate
                         ).toLocaleDateString()}`
                       : '-'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Insight Agent</span>
-                  <span className="font-medium">
-                    {insightAgents.find((a) => a.id === selectedInsightAgent)?.name || 'None'}
                   </span>
                 </div>
                 <div className="flex justify-between">
