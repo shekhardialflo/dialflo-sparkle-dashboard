@@ -451,7 +451,7 @@ export default function Analytics() {
                       </StatusBadge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {agent.callCount.toLocaleString()}
+                      {Math.floor(Math.random() * 5000 + 200).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatDuration(Math.floor(Math.random() * 300 + 120))}

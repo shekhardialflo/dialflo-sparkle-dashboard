@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bot, Lightbulb, PhoneOutgoing, PhoneIncoming, Globe, ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
+import { PhoneOutgoing, PhoneIncoming, Globe, ChevronRight, ChevronLeft, Check, X, Link2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,54 +21,44 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { voices, voiceAgents } from '@/data/mockData';
+import { voices } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import type { AgentMode } from '@/data/mockData';
 
 interface CreateAssistantModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-type AgentType = 'voice' | 'insight' | null;
-type Direction = 'inbound' | 'outbound' | 'webcall';
-
 const steps = ['Basics', 'Voice', 'Prompt', 'Variables', 'Review'];
 
 export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModalProps) {
   const { toast } = useToast();
-  const [agentType, setAgentType] = useState<AgentType>(null);
   const [currentStep, setCurrentStep] = useState(0);
 
   // Form state
   const [name, setName] = useState('');
   const [primaryLanguage, setPrimaryLanguage] = useState('english');
-  const [direction, setDirection] = useState<Direction>('outbound');
+  const [agentMode, setAgentMode] = useState<AgentMode>('outbound');
   const [selectedVoice, setSelectedVoice] = useState('');
   const [firstMessage, setFirstMessage] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [isInterruptible, setIsInterruptible] = useState(true);
+  const [syncDual, setSyncDual] = useState(true);
   const [variables, setVariables] = useState<{ key: string; type: string }[]>([]);
 
-  // Insight agent form state
-  const [analysisPrompt, setAnalysisPrompt] = useState('');
-  const [insightFields, setInsightFields] = useState<{ name: string; type: string }[]>([]);
-  const [selectedVoiceAgentId, setSelectedVoiceAgentId] = useState('');
-
   const resetForm = () => {
-    setAgentType(null);
     setCurrentStep(0);
     setName('');
     setPrimaryLanguage('english');
-    setDirection('outbound');
+    setAgentMode('outbound');
     setSelectedVoice('');
     setFirstMessage('');
     setSystemPrompt('');
     setIsInterruptible(true);
+    setSyncDual(true);
     setVariables([]);
-    setAnalysisPrompt('');
-    setInsightFields([]);
-    setSelectedVoiceAgentId('');
   };
 
   const handleClose = () => {
@@ -77,12 +67,10 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
   };
 
   const handleCreate = () => {
-    const agentName = agentType === 'insight' 
-      ? `${voiceAgents.find(a => a.id === selectedVoiceAgentId)?.name} – Insight Agent`
-      : name;
+    const modeLabel = agentMode === 'dual' ? ' (Dual pair)' : '';
     toast({
       title: 'Assistant created',
-      description: `${agentName} has been created successfully.`,
+      description: `${name}${modeLabel} has been created successfully.`,
     });
     handleClose();
   };
@@ -95,179 +83,8 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
     setVariables(variables.filter((_, i) => i !== index));
   };
 
-  const addInsightField = () => {
-    setInsightFields([...insightFields, { name: '', type: 'string' }]);
-  };
+  const directionFromMode = agentMode === 'inbound' ? 'Inbound' : agentMode === 'outbound' ? 'Outbound' : 'Inbound + Outbound';
 
-  const removeInsightField = (index: number) => {
-    setInsightFields(insightFields.filter((_, i) => i !== index));
-  };
-
-  // Type selector
-  if (!agentType) {
-    return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create Assistant</DialogTitle>
-            <DialogDescription>Choose the type of assistant you want to create</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Card
-              className={cn(
-                'cursor-pointer border-2 transition-colors hover:border-primary',
-                agentType === 'voice' && 'border-primary'
-              )}
-              onClick={() => setAgentType('voice')}
-            >
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Bot className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Voice Agent</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Handle calls - inbound, outbound, or web
-                  </p>
-                </div>
-                <ChevronRight className="ml-auto h-5 w-5 text-muted-foreground" />
-              </CardContent>
-            </Card>
-            <Card
-              className={cn(
-                'cursor-pointer border-2 transition-colors hover:border-primary',
-                agentType === 'insight' && 'border-primary'
-              )}
-              onClick={() => setAgentType('insight')}
-            >
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
-                  <Lightbulb className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Insight Agent</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Extract data from call transcripts
-                  </p>
-                </div>
-                <ChevronRight className="ml-auto h-5 w-5 text-muted-foreground" />
-              </CardContent>
-            </Card>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Insight agent form
-  if (agentType === 'insight') {
-    const selectedVoiceAgent = voiceAgents.find(a => a.id === selectedVoiceAgentId);
-    
-    return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Create Insight Agent</DialogTitle>
-            <DialogDescription>Configure post-call analysis for the selected voice agent</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Select Voice Agent</Label>
-              <Select value={selectedVoiceAgentId} onValueChange={setSelectedVoiceAgentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a voice agent" />
-                </SelectTrigger>
-                <SelectContent>
-                  {voiceAgents.map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id}>
-                      {agent.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedVoiceAgent && (
-                <p className="text-xs text-muted-foreground">
-                  Insight Agent name: <span className="font-medium">{selectedVoiceAgent.name} – Insight Agent</span>
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="analysis-prompt">Analysis Prompt</Label>
-              <Textarea
-                id="analysis-prompt"
-                placeholder="Describe what information to extract from call transcripts..."
-                rows={4}
-                value={analysisPrompt}
-                onChange={(e) => setAnalysisPrompt(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Extraction Fields</Label>
-                <Button variant="outline" size="sm" onClick={addInsightField}>
-                  Add Field
-                </Button>
-              </div>
-              {insightFields.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No fields defined yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {insightFields.map((field, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        placeholder="Field name"
-                        value={field.name}
-                        onChange={(e) => {
-                          const updated = [...insightFields];
-                          updated[index].name = e.target.value;
-                          setInsightFields(updated);
-                        }}
-                      />
-                      <Select
-                        value={field.type}
-                        onValueChange={(value) => {
-                          const updated = [...insightFields];
-                          updated[index].type = value;
-                          setInsightFields(updated);
-                        }}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="string">String</SelectItem>
-                          <SelectItem value="number">Number</SelectItem>
-                          <SelectItem value="boolean">Boolean</SelectItem>
-                          <SelectItem value="enum">Enum</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeInsightField(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setAgentType(null)}>
-              Back
-            </Button>
-            <Button onClick={handleCreate} disabled={!selectedVoiceAgentId || !analysisPrompt}>
-              Create Insight Agent
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Voice agent stepper
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl">
@@ -319,45 +136,58 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Primary Language *</Label>
-                  <Select value={primaryLanguage} onValueChange={setPrimaryLanguage}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="hindi">Hindi</SelectItem>
-                      <SelectItem value="spanish">Spanish</SelectItem>
-                      <SelectItem value="french">French</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label>Primary Language *</Label>
+                <Select value={primaryLanguage} onValueChange={setPrimaryLanguage}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="english">English</SelectItem>
+                    <SelectItem value="hindi">Hindi</SelectItem>
+                    <SelectItem value="spanish">Spanish</SelectItem>
+                    <SelectItem value="french">French</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label>Direction *</Label>
+                <Label>Agent Mode *</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Dual creates a linked inbound + outbound pair with shared config.
+                </p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[
-                    { value: 'outbound', label: 'Outbound', icon: PhoneOutgoing },
-                    { value: 'inbound', label: 'Inbound', icon: PhoneIncoming },
-                    { value: 'webcall', label: 'Webcall', icon: Globe },
+                    { value: 'inbound' as AgentMode, label: 'Inbound', icon: PhoneIncoming, desc: 'Receive calls' },
+                    { value: 'outbound' as AgentMode, label: 'Outbound', icon: PhoneOutgoing, desc: 'Make calls' },
+                    { value: 'dual' as AgentMode, label: 'Dual', icon: Link2, desc: 'Both directions' },
                   ].map((opt) => (
                     <Card
                       key={opt.value}
                       className={cn(
                         'cursor-pointer border-2 transition-colors',
-                        direction === opt.value ? 'border-primary' : 'hover:border-primary/50'
+                        agentMode === opt.value ? 'border-primary' : 'hover:border-primary/50'
                       )}
-                      onClick={() => setDirection(opt.value as Direction)}
+                      onClick={() => setAgentMode(opt.value)}
                     >
-                      <CardContent className="flex items-center gap-3 p-3">
-                        <opt.icon className="h-4 w-4" />
+                      <CardContent className="flex flex-col items-center gap-1 p-3 text-center">
+                        <opt.icon className="h-5 w-5" />
                         <span className="text-sm font-medium">{opt.label}</span>
+                        <span className="text-[11px] text-muted-foreground">{opt.desc}</span>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
+                {agentMode === 'dual' && (
+                  <div className="flex items-center justify-between rounded-lg border p-3 mt-3">
+                    <div>
+                      <Label className="text-sm">Sync changes across pair</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Prompt, knowledge base, and insight agent stay in sync.
+                      </p>
+                    </div>
+                    <Switch checked={syncDual} onCheckedChange={setSyncDual} />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -452,7 +282,7 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                 <Label htmlFor="system-prompt">System Prompt / Objective</Label>
                 <Textarea
                   id="system-prompt"
-                  placeholder="You are a professional sales agent. Your goal is to qualify leads based on budget, authority, need, and timeline..."
+                  placeholder="You are a professional sales agent..."
                   rows={6}
                   value={systemPrompt}
                   onChange={(e) => setSystemPrompt(e.target.value)}
@@ -552,8 +382,12 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                   <span className="font-medium">{name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-muted-foreground">Mode</span>
+                  <span className="font-medium capitalize">{agentMode}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">Direction</span>
-                  <span className="font-medium capitalize">{direction}</span>
+                  <span className="font-medium">{directionFromMode}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Language</span>
@@ -569,11 +403,24 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                   <span className="text-muted-foreground">Interruptible</span>
                   <span className="font-medium">{isInterruptible ? 'Yes' : 'No'}</span>
                 </div>
+                {agentMode === 'dual' && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Sync pair</span>
+                    <span className="font-medium">{syncDual ? 'Yes' : 'No'}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Variables</span>
                   <span className="font-medium">{variables.length}</span>
                 </div>
               </div>
+              {agentMode === 'dual' && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <p className="text-xs text-muted-foreground">
+                    Two linked agents will be created — one for inbound and one for outbound — sharing the same prompt, knowledge base, and insight agent.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -584,14 +431,14 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
             variant="outline"
             onClick={() => {
               if (currentStep === 0) {
-                setAgentType(null);
+                handleClose();
               } else {
                 setCurrentStep(currentStep - 1);
               }
             }}
           >
             <ChevronLeft className="mr-2 h-4 w-4" />
-            Back
+            {currentStep === 0 ? 'Cancel' : 'Back'}
           </Button>
           {currentStep < steps.length - 1 ? (
             <Button
