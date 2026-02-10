@@ -8,10 +8,10 @@ interface StatusBadgeProps {
 
 // Low saturation status colors - calm, Notion-inspired
 const statusStyles = {
-  success: 'bg-[hsl(142_40%_94%)] text-[hsl(142_50%_35%)] border-transparent',
-  warning: 'bg-[hsl(40_50%_94%)] text-[hsl(32_70%_40%)] border-transparent',
-  error: 'bg-[hsl(0_50%_95%)] text-[hsl(0_55%_45%)] border-transparent',
-  info: 'bg-[hsl(217_50%_95%)] text-[hsl(217_60%_50%)] border-transparent',
+  success: 'bg-[hsl(142_40%_94%)] text-[hsl(142_50%_35%)] dark:bg-[hsl(142_30%_12%)] dark:text-[hsl(142_50%_45%)] border-transparent',
+  warning: 'bg-[hsl(40_50%_94%)] text-[hsl(32_70%_40%)] dark:bg-[hsl(32_30%_12%)] dark:text-[hsl(32_60%_50%)] border-transparent',
+  error: 'bg-[hsl(0_50%_95%)] text-[hsl(0_55%_45%)] dark:bg-[hsl(0_30%_12%)] dark:text-[hsl(0_55%_50%)] border-transparent',
+  info: 'bg-[hsl(217_50%_95%)] text-[hsl(217_60%_50%)] dark:bg-[hsl(217_30%_12%)] dark:text-[hsl(217_60%_55%)] border-transparent',
   neutral: 'bg-muted/70 text-muted-foreground border-transparent',
 };
 
