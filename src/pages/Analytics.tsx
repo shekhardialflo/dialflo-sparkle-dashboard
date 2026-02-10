@@ -32,7 +32,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { analyticsData, campaigns, voiceAgents, insightAgents } from '@/data/mockData';
+import { analyticsData, campaigns, voiceAgents } from '@/data/mockData';
 
 export default function Analytics() {
   const [searchParams] = useSearchParams();
@@ -57,7 +57,7 @@ export default function Analytics() {
         subtitle="Track performance across calls, campaigns, and assistants"
       />
 
-      {/* Filter Bar */}
+      {/* Filter Bar - tab-aware */}
       <div className="mb-6 flex flex-wrap items-center gap-4">
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-36">
@@ -72,33 +72,42 @@ export default function Analytics() {
           </SelectContent>
         </Select>
 
-        <Select value={assistantFilter} onValueChange={setAssistantFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All Assistants" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Assistants</SelectItem>
-            {voiceAgents.map((agent) => (
-              <SelectItem key={agent.id} value={agent.id}>
-                {agent.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {activeTab !== 'campaigns' && (
+          <Select value={assistantFilter} onValueChange={(val) => {
+            setAssistantFilter(val);
+            if (activeTab === 'assistants') {
+              setCampaignFilter('all');
+            }
+          }}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All Assistants" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Assistants</SelectItem>
+              {voiceAgents.map((agent) => (
+                <SelectItem key={agent.id} value={agent.id}>
+                  {agent.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
-        <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All Campaigns" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Campaigns</SelectItem>
-            {campaigns.map((campaign) => (
-              <SelectItem key={campaign.id} value={campaign.id}>
-                {campaign.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {activeTab !== 'assistants' && (
+          <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All Campaigns" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Campaigns</SelectItem>
+              {campaigns.map((campaign) => (
+                <SelectItem key={campaign.id} value={campaign.id}>
+                  {campaign.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <div className="flex items-center gap-2">
           <Switch
@@ -117,7 +126,6 @@ export default function Analytics() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           <TabsTrigger value="assistants">Assistants</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -473,63 +481,6 @@ export default function Analytics() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="insights">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <div>
-                  <CardTitle className="text-sm font-medium">Extracted Fields Coverage</CardTitle>
-                  <p className="mt-1 text-xs text-muted-foreground/70">How many calls have extracted insights from Insight Agents</p>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Calls with insights</span>
-                    <span className="font-medium">78%</span>
-                  </div>
-                  <Progress value={78} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Fields extracted per call</span>
-                    <span className="font-medium">4.2 avg</span>
-                  </div>
-                  <Progress value={84} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div>
-                  <CardTitle className="text-sm font-medium">Insight Agent Runs</CardTitle>
-                  <p className="mt-1 text-xs text-muted-foreground/70">Recent activity from your configured Insight Agents</p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Agent</TableHead>
-                      <TableHead>Calls Analyzed</TableHead>
-                      <TableHead>Last Run</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {insightAgents.map((agent) => (
-                      <TableRow key={agent.id}>
-                        <TableCell className="font-medium">{agent.name}</TableCell>
-                        <TableCell>{agent.callsAnalyzed.toLocaleString()}</TableCell>
-                        <TableCell className="text-muted-foreground">{agent.updatedAt}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );
