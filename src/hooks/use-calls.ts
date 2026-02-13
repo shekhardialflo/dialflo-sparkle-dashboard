@@ -1,5 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { callsApi, callInsightsApi } from '@/services/api';
+import { mockCallInsights } from '@/services/mockFallback';
+
+// Helper: try API, fall back to mock
+async function withFallback<T>(apiFn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await apiFn();
+  } catch {
+    console.warn('[Dialflo] API unavailable, using demo data');
+    return fallback;
+  }
+}
 
 // ----- Query Keys -----
 export const callKeys = {
@@ -49,7 +60,7 @@ export function useCallInsights(params?: {
 }) {
   return useQuery({
     queryKey: insightKeys.list(params),
-    queryFn: () => callInsightsApi.list(params),
+    queryFn: () => withFallback(() => callInsightsApi.list(params), mockCallInsights),
   });
 }
 

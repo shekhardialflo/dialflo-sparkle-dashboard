@@ -1,6 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaignsApi, audiencesApi } from '@/services/api';
+import { mockCampaigns, mockAudiences } from '@/services/mockFallback';
 import type { CampaignCreateRequest, AudienceUpdateRequest } from '@/types/api';
+
+// Helper: try API, fall back to mock
+async function withFallback<T>(apiFn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await apiFn();
+  } catch {
+    console.warn('[Dialflo] API unavailable, using demo data');
+    return fallback;
+  }
+}
 
 // ----- Query Keys -----
 export const campaignKeys = {
@@ -21,7 +32,7 @@ export const audienceKeys = {
 export function useCampaigns() {
   return useQuery({
     queryKey: campaignKeys.list(),
-    queryFn: () => campaignsApi.list(),
+    queryFn: () => withFallback(() => campaignsApi.list(), mockCampaigns),
   });
 }
 
@@ -108,7 +119,7 @@ export function useDeleteCampaign() {
 export function useAudiences() {
   return useQuery({
     queryKey: audienceKeys.list(),
-    queryFn: () => audiencesApi.list(),
+    queryFn: () => withFallback(() => audiencesApi.list(), mockAudiences),
   });
 }
 
