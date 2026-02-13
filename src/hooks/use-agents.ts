@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { agentsApi, taskAgentsApi } from '@/services/api';
+import {
+  mockAgents,
+  mockVoices,
+  mockNumbers,
+  mockTaskAgents,
+} from '@/services/mockFallback';
 import type {
   CallAgentRequest,
   CallAgentRequestUpdate,
@@ -23,19 +29,32 @@ export const agentKeys = {
   allTaskAgents: () => [...agentKeys.all, 'taskAgents'] as const,
 };
 
+// Helper: try API, fall back to mock
+async function withFallback<T>(apiFn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await apiFn();
+  } catch {
+    console.warn('[Dialflo] API unavailable, using demo data');
+    return fallback;
+  }
+}
+
 // ----- Agent Queries -----
 
 export function useAgents(params?: { enabled?: boolean; phone_number?: string }) {
   return useQuery({
     queryKey: agentKeys.list(params),
-    queryFn: () => agentsApi.list(params),
+    queryFn: () => withFallback(() => agentsApi.list(params), mockAgents),
   });
 }
 
 export function useAgent(agentId: number) {
   return useQuery({
     queryKey: agentKeys.detail(agentId),
-    queryFn: () => agentsApi.get(agentId),
+    queryFn: () => withFallback(
+      () => agentsApi.get(agentId),
+      mockAgents.filter(a => a.id === agentId)
+    ),
     enabled: agentId > 0,
   });
 }
@@ -43,15 +62,15 @@ export function useAgent(agentId: number) {
 export function useVoices() {
   return useQuery({
     queryKey: agentKeys.voices(),
-    queryFn: () => agentsApi.voices(),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: () => withFallback(() => agentsApi.voices(), mockVoices),
+    staleTime: 10 * 60 * 1000,
   });
 }
 
 export function usePhoneNumbers() {
   return useQuery({
     queryKey: agentKeys.numbers(),
-    queryFn: () => agentsApi.numbers(),
+    queryFn: () => withFallback(() => agentsApi.numbers(), mockNumbers),
   });
 }
 
@@ -119,7 +138,10 @@ export function useDeleteAgent() {
 export function useTaskAgents(agentId: number) {
   return useQuery({
     queryKey: agentKeys.taskAgents(agentId),
-    queryFn: () => taskAgentsApi.listByAgent(agentId),
+    queryFn: () => withFallback(
+      () => taskAgentsApi.listByAgent(agentId),
+      mockTaskAgents.filter(t => t.agent_id === agentId)
+    ),
     enabled: agentId > 0,
   });
 }
@@ -127,7 +149,7 @@ export function useTaskAgents(agentId: number) {
 export function useAllTaskAgents() {
   return useQuery({
     queryKey: agentKeys.allTaskAgents(),
-    queryFn: () => taskAgentsApi.listAll(),
+    queryFn: () => withFallback(() => taskAgentsApi.listAll(), mockTaskAgents),
   });
 }
 

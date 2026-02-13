@@ -1,5 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi } from '@/services/api';
+import { mockDashboardDailyCalls } from '@/services/mockFallback';
+
+// Helper: try API, fall back to mock
+async function withFallback<T>(apiFn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await apiFn();
+  } catch {
+    console.warn('[Dialflo] API unavailable, using demo data');
+    return fallback;
+  }
+}
 
 // ----- Query Keys -----
 export const analyticsKeys = {
@@ -26,7 +37,10 @@ export function useDashboardDailyCalls(params?: {
 }) {
   return useQuery({
     queryKey: analyticsKeys.dashboardDaily(params),
-    queryFn: () => analyticsApi.dashboardDailyCalls(params),
+    queryFn: () => withFallback(
+      () => analyticsApi.dashboardDailyCalls(params),
+      mockDashboardDailyCalls
+    ),
   });
 }
 
