@@ -62,6 +62,12 @@ async function apiFetch<T>(endpoint: string, options: RequestOptions = {}): Prom
     return undefined as T;
   }
 
+  // Verify response is actually JSON before parsing
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('API returned non-JSON response. Is the backend running?');
+  }
+
   return response.json();
 }
 
