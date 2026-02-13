@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Slack, Globe } from 'lucide-react';
+import { X, Plus, Slack, Globe, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -20,13 +20,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { type VoiceAgent, type InsightConfig } from '@/data/mockData';
+import type { CallAgentResponse } from '@/types/api';
+import { useTaskAgents, useCreateTaskAgent, useUpdateTaskAgent } from '@/hooks/use-agents';
 import { useToast } from '@/hooks/use-toast';
 
 interface InsightAgentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  agent: VoiceAgent | null;
+  agent: CallAgentResponse | null;
+}
+
+interface InsightConfig {
+  enabled: boolean;
+  analysisPrompt: string;
+  fields: { name: string; type: 'string' | 'number' | 'boolean' | 'enum' }[];
+  destinations: { type: 'slack' | 'webhook'; url: string; enabled: boolean }[];
 }
 
 const emptyConfig: InsightConfig = {
@@ -38,17 +46,48 @@ const emptyConfig: InsightConfig = {
 
 export function InsightAgentModal({ open, onOpenChange, agent }: InsightAgentModalProps) {
   const { toast } = useToast();
+  const agentId = agent?.id ?? 0;
+  const { data: taskAgents = [] } = useTaskAgents(agentId);
+  const createTaskAgent = useCreateTaskAgent();
+  const updateTaskAgent = useUpdateTaskAgent();
+
   const [config, setConfig] = useState<InsightConfig>(emptyConfig);
 
+  // Find existing insight task agent for this agent
+  const existingInsightAgent = taskAgents.find(
+    (ta) => ta.agent_task === 'INSIGHT_GENERATION'
+  );
+
+  // Sync config when agent/taskAgents change
   useEffect(() => {
-    if (agent?.insightConfig) {
-      setConfig({ ...agent.insightConfig });
+    if (existingInsightAgent) {
+      const taskDetails = (existingInsightAgent.task_details || {}) as Record<string, unknown>;
+      setConfig({
+        enabled: existingInsightAgent.enabled,
+        analysisPrompt: existingInsightAgent.prompt?.analysis || '',
+        fields: Array.isArray(taskDetails.fields)
+          ? (taskDetails.fields as InsightConfig['fields'])
+          : [],
+        destinations: Array.isArray(taskDetails.destinations)
+          ? (taskDetails.destinations as InsightConfig['destinations'])
+          : [],
+      });
     } else {
       setConfig({ ...emptyConfig, enabled: true });
     }
-  }, [agent]);
+  }, [existingInsightAgent?.id, agent?.id]);
 
   if (!agent) return null;
+
+  const direction = agent.call_type === 'INCOMING' ? 'inbound' : 'outbound';
+  const initials = agent.agent_name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const isSaving = createTaskAgent.isPending || updateTaskAgent.isPending;
 
   const addField = () => {
     setConfig((prev) => ({
@@ -78,12 +117,42 @@ export function InsightAgentModal({ open, onOpenChange, agent }: InsightAgentMod
     }));
   };
 
-  const handleSave = () => {
-    toast({
-      title: config.enabled ? 'Insight Agent saved' : 'Insight Agent disabled',
-      description: `Configuration updated for ${agent.name}.`,
-    });
-    onOpenChange(false);
+  const handleSave = async () => {
+    try {
+      const taskData = {
+        agent_id: agent.id,
+        agent_name: 'Insight Agent for ' + agent.agent_name,
+        agent_task: 'INSIGHT_GENERATION' as const,
+        prompt: { analysis: config.analysisPrompt },
+        task_details: {
+          fields: config.fields,
+          destinations: config.destinations,
+        },
+        enabled: config.enabled,
+        version: existingInsightAgent ? existingInsightAgent.version : 1,
+      };
+
+      if (existingInsightAgent) {
+        await updateTaskAgent.mutateAsync({
+          agentId: existingInsightAgent.id,
+          data: taskData,
+        });
+      } else {
+        await createTaskAgent.mutateAsync(taskData);
+      }
+
+      toast({
+        title: config.enabled ? 'Insight Agent saved' : 'Insight Agent disabled',
+        description: `Configuration updated for ${agent.agent_name}.`,
+      });
+      onOpenChange(false);
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Failed to save insight agent configuration.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -91,10 +160,10 @@ export function InsightAgentModal({ open, onOpenChange, agent }: InsightAgentMod
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
-            {agent.insightConfig?.enabled ? 'Manage' : 'Add'} Insight Agent
+            {existingInsightAgent ? 'Manage' : 'Add'} Insight Agent
           </DialogTitle>
           <DialogDescription>
-            Configure post-call analysis for <span className="font-medium">{agent.name}</span>
+            Configure post-call analysis for <span className="font-medium">{agent.agent_name}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -104,10 +173,10 @@ export function InsightAgentModal({ open, onOpenChange, agent }: InsightAgentMod
             <Label className="text-xs text-muted-foreground">Linked Voice Agent</Label>
             <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2.5 text-sm">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                {agent.initials}
+                {initials}
               </span>
-              {agent.name}
-              <StatusBadge status="neutral" className="ml-auto">{agent.direction}</StatusBadge>
+              {agent.agent_name}
+              <StatusBadge status="neutral" className="ml-auto">{direction}</StatusBadge>
             </div>
           </div>
 
@@ -247,7 +316,10 @@ export function InsightAgentModal({ open, onOpenChange, agent }: InsightAgentMod
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

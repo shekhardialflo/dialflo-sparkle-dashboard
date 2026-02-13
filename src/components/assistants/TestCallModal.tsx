@@ -18,18 +18,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { type VoiceAgent, phoneNumbers } from '@/data/mockData';
+import type { CallAgentResponse } from '@/types/api';
+import { usePhoneNumbers } from '@/hooks/use-agents';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestCallModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  agent: VoiceAgent | null;
+  agent: CallAgentResponse | null;
 }
 
 export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps) {
   const { toast } = useToast();
-  const [selectedNumber, setSelectedNumber] = useState(phoneNumbers[0]?.id || '');
+  const { data: phoneNumbers = [] } = usePhoneNumbers();
+  const [selectedNumber, setSelectedNumber] = useState('');
   const [calleeName, setCalleeName] = useState('');
   const [calleePhone, setCalleePhone] = useState('');
   const [copied, setCopied] = useState(false);
@@ -39,7 +41,7 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
   const handleStartCall = () => {
     toast({
       title: 'Test call initiated',
-      description: `Starting test call with ${agent.name}`,
+      description: `Starting test call with ${agent.agent_name}`,
     });
     onOpenChange(false);
   };
@@ -49,7 +51,7 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
   -H 'Authorization: Bearer YOUR_API_KEY' \\
   -H 'Content-Type: application/json' \\
   -d '{
-    "assistant_id": "${agent.id}",
+    "assistant_id": ${agent.id},
     "phone_number": "${calleePhone}",
     "name": "${calleeName}"
   }'`;
@@ -67,7 +69,7 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Test {agent.name}</DialogTitle>
+          <DialogTitle>Test {agent.agent_name}</DialogTitle>
           <DialogDescription>
             Start a test call to verify your assistant is working correctly
           </DialogDescription>
@@ -98,8 +100,8 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
                 </SelectTrigger>
                 <SelectContent>
                   {phoneNumbers.map((num) => (
-                    <SelectItem key={num.id} value={num.id}>
-                      {num.number} ({num.label})
+                    <SelectItem key={num.number} value={num.number}>
+                      {num.number}
                     </SelectItem>
                   ))}
                 </SelectContent>

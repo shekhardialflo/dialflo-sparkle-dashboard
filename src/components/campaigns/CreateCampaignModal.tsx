@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronLeft, Check, Upload, FileSpreadsheet, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Check, Upload, FileSpreadsheet, X, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -18,11 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { voiceAgents, contactLists } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { RetryStrategy, defaultRetryStrategy } from '@/types/retryStrategy';
 import { RetryStrategyEditor } from './RetryStrategyEditor';
+import { useAgents } from '@/hooks/use-agents';
+import { useAudiences, useCreateCampaign, useCreateAudience } from '@/hooks/use-campaigns';
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -47,6 +48,12 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
 
+  // API hooks
+  const { data: agents = [], isLoading: agentsLoading } = useAgents();
+  const { data: audiences = [], isLoading: audiencesLoading } = useAudiences();
+  const createCampaign = useCreateCampaign();
+  const createAudience = useCreateAudience();
+
   // Form state
   const [name, setName] = useState('');
   const [selectedAssistant, setSelectedAssistant] = useState('');
@@ -56,6 +63,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
   const [selectedList, setSelectedList] = useState('');
   
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [createdAudienceId, setCreatedAudienceId] = useState<string | null>(null);
   const [retryStrategy, setRetryStrategy] = useState<RetryStrategy>(defaultRetryStrategy);
 
   const resetForm = () => {
@@ -68,6 +76,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     setSelectedList('');
     
     setUploadedFile(null);
+    setCreatedAudienceId(null);
     setRetryStrategy(defaultRetryStrategy);
   };
 
@@ -76,18 +85,57 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     onOpenChange(false);
   };
 
-  const handleLaunch = () => {
-    toast({
-      title: 'Campaign created',
-      description: `${name} has been created and scheduled successfully.`,
-    });
-    handleClose();
+  const handleLaunch = async () => {
+    try {
+      const audienceId = selectedList || createdAudienceId;
+      if (!audienceId) {
+        toast({ title: 'Please select or upload a calling list', variant: 'destructive' });
+        return;
+      }
+
+      await createCampaign.mutateAsync({
+        campaign_name: name,
+        description: name,
+        agent_id: parseInt(selectedAssistant, 10),
+        audience_id: audienceId,
+        scheduled_start_time: startDate ? new Date(startDate).toISOString() : null,
+      });
+
+      toast({
+        title: 'Campaign created',
+        description: `${name} has been created and scheduled successfully.`,
+      });
+      handleClose();
+    } catch {
+      toast({
+        title: 'Failed to create campaign',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile(file);
+      // Create an audience from the uploaded file
+      try {
+        const result = await createAudience.mutateAsync({
+          name: file.name.replace(/\.csv$/i, ''),
+          description: 'Uploaded via campaign creation',
+          file,
+        });
+        setCreatedAudienceId(result.id);
+        toast({ title: 'File uploaded', description: 'Audience created from uploaded file.' });
+      } catch {
+        toast({
+          title: 'Upload failed',
+          description: 'Failed to create audience from file.',
+          variant: 'destructive',
+        });
+        setUploadedFile(null);
+      }
     }
   };
 
@@ -97,6 +145,15 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     }
     return retryStrategy.backoffMinutes.map((m) => `${m}m`).join(' → ');
   };
+
+  // Helpers for review step
+  const selectedAgentName = agents.find((a) => a.id === parseInt(selectedAssistant, 10))?.agent_name;
+  const selectedAudienceName = selectedList
+    ? audiences.find((a) => a.id === selectedList)?.name
+    : uploadedFile?.name;
+  const selectedAudienceSize = selectedList
+    ? audiences.find((a) => a.id === selectedList)?.size
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -154,12 +211,12 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                 <Label>Select Assistant *</Label>
                 <Select value={selectedAssistant} onValueChange={setSelectedAssistant}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose an assistant" />
+                    <SelectValue placeholder={agentsLoading ? 'Loading...' : 'Choose an assistant'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {voiceAgents.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.name} ({agent.direction})
+                    {agents.map((agent) => (
+                      <SelectItem key={agent.id} value={String(agent.id)}>
+                        {agent.agent_name} ({agent.call_type === 'INCOMING' ? 'Inbound' : 'Outbound'})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -197,12 +254,12 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                         <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
                         <div>
                           <p className="font-medium">
-                            {contactLists.find((l) => l.id === selectedList)?.name}
+                            {audiences.find((l) => l.id === selectedList)?.name}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {contactLists
+                            {audiences
                               .find((l) => l.id === selectedList)
-                              ?.records.toLocaleString()}{' '}
+                              ?.size?.toLocaleString() ?? '—'}{' '}
                             records
                           </p>
                         </div>
@@ -215,12 +272,47 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                 </Card>
               ) : (
                 <div className="space-y-4">
+                  {/* Existing audiences selection */}
+                  {audiences.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Select Existing List</Label>
+                      <Select value={selectedList} onValueChange={(val) => {
+                        setSelectedList(val);
+                        setUploadedFile(null);
+                        setCreatedAudienceId(null);
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={audiencesLoading ? 'Loading...' : 'Choose a list'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {audiences.map((audience) => (
+                            <SelectItem key={audience.id} value={audience.id}>
+                              {audience.name} {audience.size != null ? `(${audience.size.toLocaleString()})` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className="relative flex items-center py-2">
+                    <div className="flex-grow border-t border-border" />
+                    <span className="mx-4 text-xs text-muted-foreground">or upload a file</span>
+                    <div className="flex-grow border-t border-border" />
+                  </div>
+
                   <div
                     className="cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-primary"
                     onClick={() => document.getElementById('file-upload')?.click()}
                   >
-                    <Upload className="mx-auto h-10 w-10 text-muted-foreground" />
-                    <p className="mt-3 font-medium">Upload CSV File</p>
+                    {createAudience.isPending ? (
+                      <Loader2 className="mx-auto h-10 w-10 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Upload className="mx-auto h-10 w-10 text-muted-foreground" />
+                    )}
+                    <p className="mt-3 font-medium">
+                      {createAudience.isPending ? 'Uploading...' : 'Upload CSV File'}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       Drag and drop or click to select
                     </p>
@@ -230,6 +322,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                       accept=".csv"
                       className="hidden"
                       onChange={handleFileUpload}
+                      disabled={createAudience.isPending}
                     />
                   </div>
 
@@ -249,7 +342,10 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setUploadedFile(null)}
+                            onClick={() => {
+                              setUploadedFile(null);
+                              setCreatedAudienceId(null);
+                            }}
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -316,15 +412,14 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Assistant</span>
                   <span className="font-medium">
-                    {voiceAgents.find((a) => a.id === selectedAssistant)?.name || '-'}
+                    {selectedAgentName || '-'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">List</span>
                   <span className="font-medium">
-                    {contactLists.find((l) => l.id === selectedList)?.name ||
-                      uploadedFile?.name ||
-                      '-'}
+                    {selectedAudienceName || '-'}
+                    {selectedAudienceSize != null && ` (${selectedAudienceSize.toLocaleString()})`}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -376,8 +471,18 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleLaunch} disabled={!name || !selectedAssistant}>
-              Launch Campaign
+            <Button
+              onClick={handleLaunch}
+              disabled={!name || !selectedAssistant || createCampaign.isPending}
+            >
+              {createCampaign.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Launch Campaign'
+              )}
             </Button>
           )}
         </div>

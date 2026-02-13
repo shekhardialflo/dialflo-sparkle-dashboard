@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, FileSpreadsheet, X } from 'lucide-react';
+import { Upload, FileSpreadsheet, X, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateAudience } from '@/hooks/use-campaigns';
 
 interface CreateListModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface CreateListModalProps {
 
 export function CreateListModal({ open, onOpenChange }: CreateListModalProps) {
   const { toast } = useToast();
+  const createAudience = useCreateAudience();
   const [name, setName] = useState('');
   const [tags, setTags] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -35,12 +37,25 @@ export function CreateListModal({ open, onOpenChange }: CreateListModalProps) {
     onOpenChange(false);
   };
 
-  const handleCreate = () => {
-    toast({
-      title: 'List created',
-      description: `${name} has been created successfully.`,
-    });
-    handleClose();
+  const handleCreate = async () => {
+    try {
+      await createAudience.mutateAsync({
+        name,
+        description: tags || undefined,
+        file: uploadedFile || undefined,
+      });
+      toast({
+        title: 'List created',
+        description: `${name} has been created successfully.`,
+      });
+      handleClose();
+    } catch {
+      toast({
+        title: 'Failed to create list',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,8 +136,18 @@ export function CreateListModal({ open, onOpenChange }: CreateListModalProps) {
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={!name || !uploadedFile}>
-            Create List
+          <Button
+            onClick={handleCreate}
+            disabled={!name || !uploadedFile || createAudience.isPending}
+          >
+            {createAudience.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              'Create List'
+            )}
           </Button>
         </div>
       </DialogContent>

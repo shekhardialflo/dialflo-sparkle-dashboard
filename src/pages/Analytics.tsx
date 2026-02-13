@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,27 +32,111 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { analyticsData, campaigns, voiceAgents } from '@/data/mockData';
+
+import { useDashboardDailyCalls } from '@/hooks/use-analytics';
+import { useAgents } from '@/hooks/use-agents';
+import { useCampaigns } from '@/hooks/use-campaigns';
+import type { CampaignResponse } from '@/types/api';
+
+// ----- Helpers -----
+
+function mapCampaignStatus(status: string): string {
+  const map: Record<string, string> = {
+    DRAFTED: 'draft',
+    SCHEDULED: 'scheduled',
+    QUEUED: 'running',
+    IN_PROGRESS: 'running',
+    PAUSED: 'paused',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+    FAILED: 'failed',
+  };
+  return map[status] || status.toLowerCase();
+}
+
+function getCampaignMetrics(summary: Record<string, unknown> | null) {
+  if (!summary) return { attempted: 0, connected: 0, answerRate: 0, conversion: 0 };
+  const values = Object.values(summary).map(Number).filter((n) => !isNaN(n));
+  const attempted = values.reduce((a, b) => a + b, 0);
+  const connected = Number(summary['ANSWERED']) || 0;
+  const answerRate = attempted > 0 ? (connected / attempted) * 100 : 0;
+  return {
+    attempted,
+    connected,
+    answerRate: Math.round(answerRate * 10) / 10,
+    conversion: 0,
+  };
+}
 
 export default function Analytics() {
   const [searchParams] = useSearchParams();
   const initialAssistant = searchParams.get('assistant') || 'all';
-  
+
   const [dateRange, setDateRange] = useState('7');
   const [assistantFilter, setAssistantFilter] = useState(initialAssistant);
   const [includeTestCalls, setIncludeTestCalls] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // ----- API hooks -----
+  const daysMap: Record<string, number> = { '7': 7, '30': 30, '90': 90 };
+  const days = daysMap[dateRange] || 30;
+
+  const { data: dailyCallsData, isLoading: dailyLoading } = useDashboardDailyCalls({
+    days,
+    exclude_internal_calls: !includeTestCalls,
+  });
+  const { data: agents = [], isLoading: agentsLoading } = useAgents();
+  const { data: campaignsData = [], isLoading: campaignsLoading } = useCampaigns();
+
+  // ----- Derived values -----
+  const totalCalls = dailyCallsData?.summary?.total_calls ?? 0;
+
+  const { totalAnswered, totalFailed } = useMemo(() => {
+    const daily = dailyCallsData?.daily ?? [];
+    return daily.reduce(
+      (acc, d) => ({
+        totalAnswered: acc.totalAnswered + (d.answered_calls ?? 0),
+        totalFailed: acc.totalFailed + (d.failed_calls ?? 0),
+      }),
+      { totalAnswered: 0, totalFailed: 0 }
+    );
+  }, [dailyCallsData]);
+
+  // Chart data mapped from daily entries
+  const chartData = useMemo(() => {
+    const daily = dailyCallsData?.daily ?? [];
+    return daily.map((d) => ({
+      date: d.date,
+      attempted: d.total_calls,
+      connected: d.answered_calls,
+      conversionRate:
+        d.total_calls > 0
+          ? Math.round((d.answered_calls / d.total_calls) * 1000) / 10
+          : 0,
+    }));
+  }, [dailyCallsData]);
+
   // Filter campaigns by selected assistant
-  const filteredCampaigns = assistantFilter === 'all'
-    ? campaigns
-    : campaigns.filter(c => c.assistantId === assistantFilter);
+  const filteredCampaigns = useMemo(() => {
+    if (assistantFilter === 'all') return campaignsData;
+    return campaignsData.filter(
+      (c: CampaignResponse) => String(c.agent_id) === assistantFilter
+    );
+  }, [campaignsData, assistantFilter]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
   };
+
+  // ----- Loading skeleton for KPI cards -----
+  const KpiSkeleton = () => (
+    <div className="flex items-center gap-2">
+      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">Loading…</span>
+    </div>
+  );
 
   return (
     <div>
@@ -83,9 +167,9 @@ export default function Analytics() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Assistants</SelectItem>
-              {voiceAgents.map((agent) => (
-                <SelectItem key={agent.id} value={agent.id}>
-                  {agent.name}
+              {agents.map((agent) => (
+                <SelectItem key={agent.id} value={String(agent.id)}>
+                  {agent.agent_name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -117,41 +201,56 @@ export default function Analytics() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Attempted</p>
-                <p className="text-xl font-semibold text-foreground">
-                  {analyticsData.totalAttempted.toLocaleString()}
-                </p>
+                {dailyLoading ? (
+                  <KpiSkeleton />
+                ) : (
+                  <p className="text-xl font-semibold text-foreground">
+                    {totalCalls.toLocaleString()}
+                  </p>
+                )}
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Connected</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {analyticsData.totalConnected.toLocaleString()}
-                </p>
+                {dailyLoading ? (
+                  <KpiSkeleton />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">
+                    {totalAnswered.toLocaleString()}
+                  </p>
+                )}
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Answered</p>
-                <p className="text-xl font-semibold text-foreground">
-                  {analyticsData.totalConnected.toLocaleString()}
-                </p>
+                {dailyLoading ? (
+                  <KpiSkeleton />
+                ) : (
+                  <p className="text-xl font-semibold text-foreground">
+                    {totalAnswered.toLocaleString()}
+                  </p>
+                )}
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">Converted</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {analyticsData.converted.toLocaleString()}
-                </p>
+                <p className="text-xs text-muted-foreground mb-1">Failed</p>
+                {dailyLoading ? (
+                  <KpiSkeleton />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">
+                    {totalFailed.toLocaleString()}
+                  </p>
+                )}
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Avg Duration</p>
-                <p className="text-xl font-semibold text-foreground">
-                  {formatDuration(analyticsData.avgDuration)}
-                </p>
+                {/* Avg duration not available from dashboard daily calls API */}
+                <p className="text-xl font-semibold text-muted-foreground">N/A</p>
               </CardContent>
             </Card>
           </div>
@@ -178,87 +277,97 @@ export default function Analytics() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={analyticsData.callsOverTime}>
-                    <CartesianGrid strokeDasharray="2 2" stroke="hsl(var(--border))" strokeOpacity={0.25} vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 10 }}
-                      stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.3}
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return `${date.getMonth() + 1}/${date.getDate()}`;
-                      }}
-                    />
-                    <YAxis 
-                      yAxisId="left" 
-                      tick={{ fontSize: 10 }} 
-                      stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.3}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      domain={[0, 100]}
-                      tick={{ fontSize: 10 }}
-                      stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.3}
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(value) => `${value}%`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border) / 0.5)',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                        fontSize: '11px',
-                      }}
-                      labelFormatter={(value) => {
-                        const date = new Date(value);
-                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                      }}
-                    />
-                    <Line
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="attempted"
-                      stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.5}
-                      strokeWidth={1.5}
-                      dot={false}
-                      name="Attempted"
-                    />
-                    <Line
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="connected"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2.5}
-                      dot={false}
-                      name="Connected"
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="conversionRate"
-                      stroke="hsl(var(--muted-foreground))"
-                      strokeOpacity={0.6}
-                      strokeWidth={1}
-                      strokeDasharray="5 5"
-                      dot={false}
-                      name="Conversion %"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {dailyLoading ? (
+                <div className="flex h-64 items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : chartData.length === 0 ? (
+                <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                  No data available for the selected period.
+                </div>
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="2 2" stroke="hsl(var(--border))" strokeOpacity={0.25} vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 10 }}
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeOpacity={0.3}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis
+                        yAxisId="left"
+                        tick={{ fontSize: 10 }}
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeOpacity={0.3}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        domain={[0, 100]}
+                        tick={{ fontSize: 10 }}
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeOpacity={0.3}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(value) => `${value}%`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border) / 0.5)',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                          fontSize: '11px',
+                        }}
+                        labelFormatter={(value) => {
+                          const date = new Date(value);
+                          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }}
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="attempted"
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeOpacity={0.5}
+                        strokeWidth={1.5}
+                        dot={false}
+                        name="Attempted"
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="connected"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2.5}
+                        dot={false}
+                        name="Connected"
+                      />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="conversionRate"
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeOpacity={0.6}
+                        strokeWidth={1}
+                        strokeDasharray="5 5"
+                        dot={false}
+                        name="Conversion %"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -285,26 +394,39 @@ export default function Analytics() {
                 <CardTitle className="text-sm font-medium">Top Campaigns</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Campaign</TableHead>
-                      <TableHead className="text-right">Attempted</TableHead>
-                      <TableHead className="text-right">Answer %</TableHead>
-                      <TableHead className="text-right">Conv %</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {campaigns.slice(0, 5).map((campaign) => (
-                      <TableRow key={campaign.id}>
-                        <TableCell className="font-medium">{campaign.name}</TableCell>
-                        <TableCell className="text-right">{campaign.attempted}</TableCell>
-                        <TableCell className="text-right">{campaign.answerRate}%</TableCell>
-                        <TableCell className="text-right">{campaign.conversion}%</TableCell>
+                {campaignsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : campaignsData.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    No campaigns available.
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Campaign</TableHead>
+                        <TableHead className="text-right">Attempted</TableHead>
+                        <TableHead className="text-right">Answer %</TableHead>
+                        <TableHead className="text-right">Conv %</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {campaignsData.slice(0, 5).map((campaign: CampaignResponse) => {
+                        const metrics = getCampaignMetrics(campaign.call_status_summary);
+                        return (
+                          <TableRow key={campaign.campaign_id}>
+                            <TableCell className="font-medium">{campaign.campaign_name}</TableCell>
+                            <TableCell className="text-right">{metrics.attempted}</TableCell>
+                            <TableCell className="text-right">{metrics.answerRate}%</TableCell>
+                            <TableCell className="text-right">{metrics.conversion}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -312,99 +434,113 @@ export default function Analytics() {
 
         <TabsContent value="campaigns">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Campaign</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Attempted</TableHead>
-                  <TableHead className="text-right">Connected</TableHead>
-                  <TableHead className="text-right">Answer Rate</TableHead>
-                  <TableHead className="text-right">Conversion</TableHead>
-                  <TableHead className="text-right">Trend</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCampaigns.map((campaign) => (
-                  <TableRow key={campaign.id} className="cursor-pointer hover:bg-muted/20">
-                    <TableCell className="font-medium text-foreground">{campaign.name}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={getCampaignStatus(campaign.status)}>
-                        {campaign.status}
-                      </StatusBadge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {campaign.attempted.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {campaign.connected.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">{campaign.answerRate}%</TableCell>
-                    <TableCell className="text-right">{campaign.conversion}%</TableCell>
-                    <TableCell className="text-right">
-                      {Math.random() > 0.5 ? (
-                        <TrendingUp className="ml-auto h-4 w-4 text-status-success" />
-                      ) : (
-                        <TrendingDown className="ml-auto h-4 w-4 text-status-error" />
-                      )}
-                    </TableCell>
+            {campaignsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredCampaigns.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                No campaigns found.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Campaign</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Attempted</TableHead>
+                    <TableHead className="text-right">Connected</TableHead>
+                    <TableHead className="text-right">Answer Rate</TableHead>
+                    <TableHead className="text-right">Conversion</TableHead>
+                    <TableHead className="text-right">Trend</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredCampaigns.map((campaign: CampaignResponse) => {
+                    const displayStatus = mapCampaignStatus(campaign.status);
+                    const metrics = getCampaignMetrics(campaign.call_status_summary);
+                    return (
+                      <TableRow key={campaign.campaign_id} className="cursor-pointer hover:bg-muted/20">
+                        <TableCell className="font-medium text-foreground">
+                          {campaign.campaign_name}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={getCampaignStatus(displayStatus)}>
+                            {displayStatus}
+                          </StatusBadge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {metrics.attempted.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {metrics.connected.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">{metrics.answerRate}%</TableCell>
+                        <TableCell className="text-right">{metrics.conversion}%</TableCell>
+                        <TableCell className="text-right">
+                          {metrics.answerRate >= 50 ? (
+                            <TrendingUp className="ml-auto h-4 w-4 text-status-success" />
+                          ) : (
+                            <TrendingDown className="ml-auto h-4 w-4 text-status-error" />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </Card>
         </TabsContent>
 
         <TabsContent value="assistants">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Assistant</TableHead>
-                  <TableHead>Direction</TableHead>
-                  <TableHead className="text-right">Total Calls</TableHead>
-                  <TableHead className="text-right">Avg Duration</TableHead>
-                  <TableHead className="text-right">Conversion</TableHead>
-                  <TableHead className="text-right">Trend</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {voiceAgents.map((agent) => (
-                  <TableRow key={agent.id} className="cursor-pointer hover:bg-muted/20">
-                    <TableCell className="font-medium text-foreground">{agent.name}</TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        status={
-                          agent.direction === 'inbound'
-                            ? 'info'
-                            : agent.direction === 'outbound'
-                            ? 'success'
-                            : 'neutral'
-                        }
-                      >
-                        {agent.direction}
-                      </StatusBadge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {Math.floor(Math.random() * 5000 + 200).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatDuration(Math.floor(Math.random() * 300 + 120))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(Math.random() * 30 + 10).toFixed(1)}%
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {Math.random() > 0.5 ? (
-                        <TrendingUp className="ml-auto h-4 w-4 text-[hsl(var(--status-success))]" />
-                      ) : (
-                        <TrendingDown className="ml-auto h-4 w-4 text-[hsl(var(--status-error))]" />
-                      )}
-                    </TableCell>
+            {agentsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : agents.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                No assistants found.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Assistant</TableHead>
+                    <TableHead>Direction</TableHead>
+                    <TableHead className="text-right">Total Calls</TableHead>
+                    <TableHead className="text-right">Avg Duration</TableHead>
+                    <TableHead className="text-right">Conversion</TableHead>
+                    <TableHead className="text-right">Trend</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {agents.map((agent) => {
+                    const direction = agent.call_type === 'INCOMING' ? 'inbound' : 'outbound';
+                    return (
+                      <TableRow key={agent.id} className="cursor-pointer hover:bg-muted/20">
+                        <TableCell className="font-medium text-foreground">
+                          {agent.agent_name}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge
+                            status={direction === 'inbound' ? 'info' : 'success'}
+                          >
+                            {direction}
+                          </StatusBadge>
+                        </TableCell>
+                        {/* Per-agent metrics require individual API calls; showing placeholders */}
+                        <TableCell className="text-right text-muted-foreground">—</TableCell>
+                        <TableCell className="text-right text-muted-foreground">—</TableCell>
+                        <TableCell className="text-right text-muted-foreground">—</TableCell>
+                        <TableCell className="text-right text-muted-foreground">—</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </Card>
         </TabsContent>
 

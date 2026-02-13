@@ -25,7 +25,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { type Campaign, insightAgents } from '@/data/mockData';
+import type { CampaignResponse, CampaignStatus } from '@/types/api';
+import { useAgents, useAllTaskAgents } from '@/hooks/use-agents';
+import { useAudiences } from '@/hooks/use-campaigns';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { RetryStrategySummary } from './RetryStrategySummary';
@@ -33,10 +35,24 @@ import { RetryStrategyEditor } from './RetryStrategyEditor';
 import { RetryQueueDrawer } from './RetryQueueDrawer';
 import { RetryStrategy, defaultRetryStrategy } from '@/types/retryStrategy';
 
+function mapCampaignStatus(status: CampaignStatus): string {
+  const map: Record<string, string> = {
+    DRAFTED: 'draft',
+    SCHEDULED: 'scheduled',
+    QUEUED: 'running',
+    IN_PROGRESS: 'running',
+    PAUSED: 'paused',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+    FAILED: 'failed',
+  };
+  return map[status] || status.toLowerCase();
+}
+
 interface CampaignDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  campaign: Campaign | null;
+  campaign: CampaignResponse | null;
 }
 
 export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: CampaignDetailsDrawerProps) {
@@ -45,22 +61,40 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
   const [queueOpen, setQueueOpen] = useState(false);
   const [localStrategy, setLocalStrategy] = useState<RetryStrategy | null>(null);
 
+  // API hooks for lookups
+  const { data: agents = [] } = useAgents();
+  const { data: audiences = [] } = useAudiences();
+  const { data: taskAgents = [] } = useAllTaskAgents();
+
   if (!campaign) return null;
 
-  const currentStrategy = localStrategy || campaign.retryStrategy || defaultRetryStrategy;
+  const currentStrategy = localStrategy || defaultRetryStrategy;
+  const mappedStatus = mapCampaignStatus(campaign.status);
 
-  const formatSchedule = (dateStr: string) => {
+  // Lookup helpers
+  const agentName = agents.find((a) => a.id === campaign.agent_id)?.agent_name || `Agent #${campaign.agent_id}`;
+  const audience = audiences.find((a) => a.id === campaign.audience_id);
+  const audienceName = audience?.name || (campaign.audience_id ? 'Unknown list' : '-');
+  const audienceSize = campaign.size ?? audience?.size ?? null;
+
+  // Performance metrics from call_status_summary
+  const summary = campaign.call_status_summary || {};
+  const answered = Number(summary['ANSWERED'] || 0);
+  const failed = Number(summary['FAILED'] || 0);
+  const notAnswered = Number(summary['NOT_ANSWERED'] || 0);
+  const lineBusy = Number(summary['LINE_BUSY'] || 0);
+  const inProgress = Number(summary['IN_PROGRESS'] || 0);
+  const queued = Number(summary['QUEUED'] || 0);
+  const attempted = answered + failed + notAnswered + lineBusy + inProgress + queued;
+  const answerRate = attempted > 0 ? Math.round((answered / attempted) * 1000) / 10 : 0;
+
+  const formatSchedule = (dateStr: string | null) => {
     try {
+      if (!dateStr) return '-';
       return format(new Date(dateStr), 'MMM d, yyyy h:mm a');
     } catch {
       return '-';
     }
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
   };
 
   const handleDownload = () => {
@@ -97,10 +131,10 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
           <SheetHeader className="border-b border-border p-6">
             <div className="flex items-center justify-between">
               <div>
-                <SheetTitle>{campaign.name}</SheetTitle>
+                <SheetTitle>{campaign.campaign_name}</SheetTitle>
                 <div className="mt-2 flex items-center gap-2">
-                  <StatusBadge status={getCampaignStatus(campaign.status)}>
-                    {campaign.status}
+                  <StatusBadge status={getCampaignStatus(mappedStatus)}>
+                    {mappedStatus}
                   </StatusBadge>
                 </div>
               </div>
@@ -120,22 +154,35 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
                 <CardContent className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Assistant</span>
-                    <span className="font-medium">{campaign.assistantName}</span>
+                    <span className="font-medium">{agentName}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">List</span>
                     <span className="font-medium">
-                      {campaign.listName} ({campaign.listCount.toLocaleString()})
+                      {audienceName}
+                      {audienceSize != null && ` (${audienceSize.toLocaleString()})`}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Start</span>
-                    <span className="font-medium">{formatSchedule(campaign.scheduleStart)}</span>
+                    <span className="text-muted-foreground">Scheduled Start</span>
+                    <span className="font-medium">{formatSchedule(campaign.scheduled_start_time)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">End</span>
-                    <span className="font-medium">{formatSchedule(campaign.scheduleEnd)}</span>
+                    <span className="text-muted-foreground">Actual Start</span>
+                    <span className="font-medium">{formatSchedule(campaign.start_time)}</span>
                   </div>
+                  {campaign.paused_at && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Paused At</span>
+                      <span className="font-medium">{formatSchedule(campaign.paused_at)}</span>
+                    </div>
+                  )}
+                  {campaign.cancelled_at && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Cancelled At</span>
+                      <span className="font-medium">{formatSchedule(campaign.cancelled_at)}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -148,30 +195,30 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
                   <div className="grid grid-cols-2 gap-4">
                     <div className="rounded-lg bg-muted/50 p-4">
                       <p className="text-sm text-muted-foreground">Attempted</p>
-                      <p className="text-2xl font-semibold">{campaign.attempted.toLocaleString()}</p>
+                      <p className="text-2xl font-semibold">{attempted.toLocaleString()}</p>
                     </div>
                     <div className="rounded-lg bg-muted/50 p-4">
                       <p className="text-sm text-muted-foreground">Connected</p>
-                      <p className="text-2xl font-semibold">{campaign.connected.toLocaleString()}</p>
+                      <p className="text-2xl font-semibold">{answered.toLocaleString()}</p>
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Answer Rate</span>
-                      <span className="font-medium">{campaign.answerRate}%</span>
+                      <span className="font-medium">{answerRate}%</span>
                     </div>
-                    <Progress value={campaign.answerRate} className="h-2" />
+                    <Progress value={answerRate} className="h-2" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                      <p className="text-lg font-semibold">{formatDuration(campaign.avgDuration)}</p>
-                      <p className="text-xs text-muted-foreground">Avg Duration</p>
+                      <p className="text-lg font-semibold">{failed.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Failed</p>
                     </div>
                     <div>
-                      <p className="text-lg font-semibold">{campaign.conversion}%</p>
-                      <p className="text-xs text-muted-foreground">Conversion</p>
+                      <p className="text-lg font-semibold">{notAnswered.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Not Answered</p>
                     </div>
                   </div>
                 </CardContent>
@@ -192,26 +239,20 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Select Insight Agent</Label>
-                    <Select defaultValue={campaign.insightAgentId || 'none'}>
+                    <Select defaultValue="none">
                       <SelectTrigger>
                         <SelectValue placeholder="Choose agent" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
-                        {insightAgents.map((agent) => (
-                          <SelectItem key={agent.id} value={agent.id}>
-                            {agent.name}
+                        {taskAgents.map((agent) => (
+                          <SelectItem key={agent.id} value={String(agent.id)}>
+                            {agent.agent_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  {campaign.lastInsightRun && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      Last run: {campaign.lastInsightRun}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -243,7 +284,7 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
               <RetryStrategyEditor
                 value={localStrategy}
                 onChange={setLocalStrategy}
-                campaignDispositions={campaign.dispositions || []}
+                campaignDispositions={[]}
                 compact
               />
             )}
@@ -261,7 +302,7 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
       <RetryQueueDrawer
         open={queueOpen}
         onOpenChange={setQueueOpen}
-        campaignName={campaign.name}
+        campaignName={campaign.campaign_name}
         queueItems={[]}
       />
     </>

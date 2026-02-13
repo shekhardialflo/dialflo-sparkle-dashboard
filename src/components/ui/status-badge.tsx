@@ -42,6 +42,10 @@ export function getCampaignStatus(status: string): StatusBadgeProps['status'] {
       return 'warning';
     case 'draft':
       return 'neutral';
+    case 'cancelled':
+      return 'warning';
+    case 'failed':
+      return 'error';
     default:
       return 'neutral';
   }

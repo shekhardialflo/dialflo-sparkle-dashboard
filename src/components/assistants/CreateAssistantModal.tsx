@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PhoneOutgoing, PhoneIncoming, Globe, ChevronRight, ChevronLeft, Check, X, Link2 } from 'lucide-react';
+import { PhoneOutgoing, PhoneIncoming, ChevronRight, ChevronLeft, Check, X, Link2, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -20,11 +20,12 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { voices } from '@/data/mockData';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useVoices, useCreateAgent } from '@/hooks/use-agents';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { AgentMode } from '@/data/mockData';
+
+type AgentMode = 'inbound' | 'outbound' | 'dual';
 
 interface CreateAssistantModalProps {
   open: boolean;
@@ -35,6 +36,8 @@ const steps = ['Basics', 'Voice', 'Prompt', 'Variables', 'Review'];
 
 export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModalProps) {
   const { toast } = useToast();
+  const { data: voices = [], isLoading: voicesLoading } = useVoices();
+  const createAgent = useCreateAgent();
   const [currentStep, setCurrentStep] = useState(0);
 
   // Form state
@@ -66,13 +69,46 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
     onOpenChange(false);
   };
 
-  const handleCreate = () => {
-    const modeLabel = agentMode === 'dual' ? ' (Dual pair)' : '';
-    toast({
-      title: 'Assistant created',
-      description: `${name}${modeLabel} has been created successfully.`,
-    });
-    handleClose();
+  const handleCreate = async () => {
+    try {
+      const callType = agentMode === 'inbound' ? ('INCOMING' as const) : ('OUTGOING' as const);
+
+      await createAgent.mutateAsync({
+        agent_name: name,
+        voice_id: selectedVoice,
+        call_type: callType,
+        prompt: { system: systemPrompt },
+        welcome_text: { default: firstMessage },
+        agent_phone_number: '',
+        enabled: true,
+      });
+
+      // If dual mode, also create a paired agent with opposite direction
+      if (agentMode === 'dual') {
+        await createAgent.mutateAsync({
+          agent_name: name + ' (Inbound)',
+          voice_id: selectedVoice,
+          call_type: 'INCOMING',
+          prompt: { system: systemPrompt },
+          welcome_text: { default: firstMessage },
+          agent_phone_number: '',
+          enabled: true,
+        });
+      }
+
+      const modeLabel = agentMode === 'dual' ? ' (Dual pair)' : '';
+      toast({
+        title: 'Assistant created',
+        description: `${name}${modeLabel} has been created successfully.`,
+      });
+      handleClose();
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Failed to create assistant. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const addVariable = () => {
@@ -194,72 +230,42 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
 
           {currentStep === 1 && (
             <div className="space-y-4">
-              <Tabs defaultValue="most_used">
-                <TabsList>
-                  <TabsTrigger value="most_used">Most Used</TabsTrigger>
-                  <TabsTrigger value="neutral">Neutral</TabsTrigger>
-                </TabsList>
-                <TabsContent value="most_used" className="mt-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {voices
-                      .filter((v) => v.category === 'most_used')
-                      .map((voice) => (
-                        <Card
-                          key={voice.id}
-                          className={cn(
-                            'cursor-pointer border-2 transition-colors',
-                            selectedVoice === voice.id ? 'border-primary' : 'hover:border-primary/50'
+              <Label>Select a Voice</Label>
+              {voicesLoading ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : voices.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-8 text-center">
+                  <p className="text-sm text-muted-foreground">No voices available.</p>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {voices.map((voice) => (
+                    <Card
+                      key={voice.voice_id}
+                      className={cn(
+                        'cursor-pointer border-2 transition-colors',
+                        selectedVoice === voice.voice_id ? 'border-primary' : 'hover:border-primary/50'
+                      )}
+                      onClick={() => setSelectedVoice(voice.voice_id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">{voice.name}</h4>
+                          </div>
+                          {selectedVoice === voice.voice_id && (
+                            <Check className="h-5 w-5 text-primary" />
                           )}
-                          onClick={() => setSelectedVoice(voice.id)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium">{voice.name}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {voice.gender} • {voice.accent}
-                                </p>
-                              </div>
-                              {selectedVoice === voice.id && (
-                                <Check className="h-5 w-5 text-primary" />
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </TabsContent>
-                <TabsContent value="neutral" className="mt-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {voices
-                      .filter((v) => v.category === 'neutral')
-                      .map((voice) => (
-                        <Card
-                          key={voice.id}
-                          className={cn(
-                            'cursor-pointer border-2 transition-colors',
-                            selectedVoice === voice.id ? 'border-primary' : 'hover:border-primary/50'
-                          )}
-                          onClick={() => setSelectedVoice(voice.id)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium">{voice.name}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {voice.gender} • {voice.accent}
-                                </p>
-                              </div>
-                              {selectedVoice === voice.id && (
-                                <Check className="h-5 w-5 text-primary" />
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -396,7 +402,7 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Voice</span>
                   <span className="font-medium">
-                    {voices.find((v) => v.id === selectedVoice)?.name || '-'}
+                    {voices.find((v) => v.voice_id === selectedVoice)?.name || '-'}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -449,7 +455,8 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleCreate} disabled={!name}>
+            <Button onClick={handleCreate} disabled={!name || createAgent.isPending}>
+              {createAgent.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Assistant
             </Button>
           )}
