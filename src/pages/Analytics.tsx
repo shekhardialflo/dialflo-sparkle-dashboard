@@ -4,7 +4,6 @@ import { Calendar, TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 import {
   Select,
   SelectContent,
@@ -32,7 +31,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
+import { MultiSelectFilter } from '@/components/analytics/MultiSelectFilter';
 import { useDashboardDailyCalls } from '@/hooks/use-analytics';
 import { useAgents } from '@/hooks/use-agents';
 import { useCampaigns } from '@/hooks/use-campaigns';
@@ -68,12 +67,18 @@ function getCampaignMetrics(summary: Record<string, unknown> | null) {
   };
 }
 
+type CallDirection = 'all' | 'inbound' | 'outbound';
+
 export default function Analytics() {
   const [searchParams] = useSearchParams();
-  const initialAssistant = searchParams.get('assistant') || 'all';
+  const initialAssistant = searchParams.get('assistant');
 
   const [dateRange, setDateRange] = useState('7');
-  const [assistantFilter, setAssistantFilter] = useState(initialAssistant);
+  const [selectedAgents, setSelectedAgents] = useState<string[]>(
+    initialAssistant ? [initialAssistant] : []
+  );
+  const [selectedAssistants, setSelectedAssistants] = useState<string[]>([]);
+  const [callDirection, setCallDirection] = useState<CallDirection>('all');
   const [includeTestCalls, setIncludeTestCalls] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -88,7 +93,13 @@ export default function Analytics() {
   const { data: agents = [], isLoading: agentsLoading } = useAgents();
   const { data: campaignsData = [], isLoading: campaignsLoading } = useCampaigns();
 
-  // ----- Derived values -----
+  // ----- Options for multi-selects -----
+  const agentOptions = useMemo(() =>
+    agents.map(a => ({ value: String(a.id), label: a.agent_name })),
+    [agents]
+  );
+
+  // ----- Derived values (ALL agents by default) -----
   const totalCalls = dailyCallsData?.summary?.total_calls ?? 0;
 
   const { totalAnswered, totalFailed } = useMemo(() => {
@@ -116,19 +127,19 @@ export default function Analytics() {
     }));
   }, [dailyCallsData]);
 
-  // Filter campaigns by selected assistant
+  // Filter campaigns by selected agents (multi-select)
   const filteredCampaigns = useMemo(() => {
-    if (assistantFilter === 'all') return campaignsData;
+    if (selectedAgents.length === 0) return campaignsData;
     return campaignsData.filter(
-      (c: CampaignResponse) => String(c.agent_id) === assistantFilter
+      (c: CampaignResponse) => selectedAgents.includes(String(c.agent_id))
     );
-  }, [campaignsData, assistantFilter]);
+  }, [campaignsData, selectedAgents]);
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
-  };
+  // Filter agents for Assistants tab (multi-select)
+  const filteredAssistants = useMemo(() => {
+    if (selectedAssistants.length === 0) return agents;
+    return agents.filter(a => selectedAssistants.includes(String(a.id)));
+  }, [agents, selectedAssistants]);
 
   // ----- Loading skeleton for KPI cards -----
   const KpiSkeleton = () => (
@@ -145,8 +156,8 @@ export default function Analytics() {
         subtitle="Track performance across calls, campaigns, and assistants"
       />
 
-      {/* Filter Bar - tab-aware */}
-      <div className="mb-6 flex flex-wrap items-center gap-4">
+      {/* Filter Bar */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-36">
             <Calendar className="mr-2 h-4 w-4" />
@@ -160,21 +171,37 @@ export default function Analytics() {
           </SelectContent>
         </Select>
 
-        {activeTab === 'campaigns' && (
-          <Select value={assistantFilter} onValueChange={setAssistantFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All Assistants" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Assistants</SelectItem>
-              {agents.map((agent) => (
-                <SelectItem key={agent.id} value={String(agent.id)}>
-                  {agent.agent_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Multi-select agents – shown on Overview and Campaigns tabs */}
+        {(activeTab === 'overview' || activeTab === 'campaigns') && (
+          <MultiSelectFilter
+            label="Agents"
+            options={agentOptions}
+            selected={selectedAgents}
+            onChange={setSelectedAgents}
+          />
         )}
+
+        {/* Multi-select assistants – shown on Assistants tab */}
+        {activeTab === 'assistants' && (
+          <MultiSelectFilter
+            label="Assistants"
+            options={agentOptions}
+            selected={selectedAssistants}
+            onChange={setSelectedAssistants}
+          />
+        )}
+
+        {/* Call Direction filter */}
+        <Select value={callDirection} onValueChange={(v) => setCallDirection(v as CallDirection)}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Calls</SelectItem>
+            <SelectItem value="inbound">Inbound</SelectItem>
+            <SelectItem value="outbound">Outbound</SelectItem>
+          </SelectContent>
+        </Select>
 
         <div className="flex items-center gap-2">
           <Switch
@@ -201,9 +228,7 @@ export default function Analytics() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Attempted</p>
-                {dailyLoading ? (
-                  <KpiSkeleton />
-                ) : (
+                {dailyLoading ? <KpiSkeleton /> : (
                   <p className="text-xl font-semibold text-foreground">
                     {totalCalls.toLocaleString()}
                   </p>
@@ -213,9 +238,7 @@ export default function Analytics() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Connected</p>
-                {dailyLoading ? (
-                  <KpiSkeleton />
-                ) : (
+                {dailyLoading ? <KpiSkeleton /> : (
                   <p className="text-2xl font-bold text-foreground">
                     {totalAnswered.toLocaleString()}
                   </p>
@@ -225,9 +248,7 @@ export default function Analytics() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Answered</p>
-                {dailyLoading ? (
-                  <KpiSkeleton />
-                ) : (
+                {dailyLoading ? <KpiSkeleton /> : (
                   <p className="text-xl font-semibold text-foreground">
                     {totalAnswered.toLocaleString()}
                   </p>
@@ -237,9 +258,7 @@ export default function Analytics() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Failed</p>
-                {dailyLoading ? (
-                  <KpiSkeleton />
-                ) : (
+                {dailyLoading ? <KpiSkeleton /> : (
                   <p className="text-2xl font-bold text-foreground">
                     {totalFailed.toLocaleString()}
                   </p>
@@ -249,7 +268,6 @@ export default function Analytics() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">Avg Duration</p>
-                {/* Avg duration not available from dashboard daily calls API */}
                 <p className="text-xl font-semibold text-muted-foreground">N/A</p>
               </CardContent>
             </Card>
@@ -334,36 +352,9 @@ export default function Analytics() {
                           return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         }}
                       />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="attempted"
-                        stroke="hsl(var(--muted-foreground))"
-                        strokeOpacity={0.5}
-                        strokeWidth={1.5}
-                        dot={false}
-                        name="Attempted"
-                      />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="connected"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2.5}
-                        dot={false}
-                        name="Connected"
-                      />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="conversionRate"
-                        stroke="hsl(var(--muted-foreground))"
-                        strokeOpacity={0.6}
-                        strokeWidth={1}
-                        strokeDasharray="5 5"
-                        dot={false}
-                        name="Conversion %"
-                      />
+                      <Line yAxisId="left" type="monotone" dataKey="attempted" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} strokeWidth={1.5} dot={false} name="Attempted" />
+                      <Line yAxisId="left" type="monotone" dataKey="connected" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} name="Connected" />
+                      <Line yAxisId="right" type="monotone" dataKey="conversionRate" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.6} strokeWidth={1} strokeDasharray="5 5" dot={false} name="Conversion %" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -372,7 +363,6 @@ export default function Analytics() {
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Disposition Breakdown */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium">Disposition Breakdown</CardTitle>
@@ -383,7 +373,7 @@ export default function Analytics() {
                     <Info className="h-5 w-5 text-muted-foreground/70" />
                   </div>
                   <p className="text-sm text-muted-foreground max-w-[280px]">
-                    Disposition breakdown is available when viewing a specific campaign (dispositions vary by campaign).
+                    Disposition breakdown is available when viewing a specific campaign.
                   </p>
                 </div>
               </CardContent>
@@ -499,7 +489,7 @@ export default function Analytics() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : agents.length === 0 ? (
+            ) : filteredAssistants.length === 0 ? (
               <div className="py-12 text-center text-sm text-muted-foreground">
                 No assistants found.
               </div>
@@ -516,7 +506,7 @@ export default function Analytics() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {agents.map((agent) => {
+                  {filteredAssistants.map((agent) => {
                     const direction = agent.call_type === 'INCOMING' ? 'inbound' : 'outbound';
                     return (
                       <TableRow key={agent.id} className="cursor-pointer hover:bg-muted/20">
@@ -524,13 +514,10 @@ export default function Analytics() {
                           {agent.agent_name}
                         </TableCell>
                         <TableCell>
-                          <StatusBadge
-                            status={direction === 'inbound' ? 'info' : 'success'}
-                          >
+                          <StatusBadge status={direction === 'inbound' ? 'info' : 'success'}>
                             {direction}
                           </StatusBadge>
                         </TableCell>
-                        {/* Per-agent metrics require individual API calls; showing placeholders */}
                         <TableCell className="text-right text-muted-foreground">—</TableCell>
                         <TableCell className="text-right text-muted-foreground">—</TableCell>
                         <TableCell className="text-right text-muted-foreground">—</TableCell>
@@ -543,7 +530,6 @@ export default function Analytics() {
             )}
           </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   );
