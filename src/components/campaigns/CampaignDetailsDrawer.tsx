@@ -60,6 +60,7 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
   const [editStrategyOpen, setEditStrategyOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const [localStrategy, setLocalStrategy] = useState<RetryStrategy | null>(null);
+  const [rerunConfirmOpen, setRerunConfirmOpen] = useState(false);
 
   // API hooks for lookups
   const { data: agents = [] } = useAgents();
@@ -153,7 +154,7 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Assistant</span>
+                    <span className="text-muted-foreground">Agent</span>
                     <span className="font-medium">{agentName}</span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -264,9 +265,9 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
                 <Download className="mr-2 h-4 w-4" />
                 Download Results
               </Button>
-              <Button className="flex-1" onClick={handleGenerateInsights}>
+              <Button className="flex-1" onClick={() => setRerunConfirmOpen(true)}>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Generate Insights
+                Re-run Insights
               </Button>
             </div>
           </div>
@@ -305,6 +306,29 @@ export function CampaignDetailsDrawer({ open, onOpenChange, campaign }: Campaign
         campaignName={campaign.campaign_name}
         queueItems={[]}
       />
+
+      {/* Re-run Insights Confirmation */}
+      <Dialog open={rerunConfirmOpen} onOpenChange={setRerunConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Re-run Insights</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to re-run insights for <span className="font-medium text-foreground">{campaign.campaign_name}</span>? This may take a few minutes.
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setRerunConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              setRerunConfirmOpen(false);
+              handleGenerateInsights();
+            }}>
+              Confirm
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

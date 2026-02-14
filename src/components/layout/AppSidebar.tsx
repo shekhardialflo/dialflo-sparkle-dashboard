@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { title: 'Assistants', url: '/', icon: Bot },
+  { title: 'Agents', url: '/', icon: Bot },
   { title: 'Campaigns', url: '/campaigns', icon: Megaphone },
   { title: 'Calls', url: '/calls', icon: Phone },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },

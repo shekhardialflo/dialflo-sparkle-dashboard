@@ -118,11 +118,11 @@ const dispositions = [
 const allColumns = [
   { id: 'calledAt', label: 'Called At', default: true },
   { id: 'callee', label: 'Callee', default: true },
-  { id: 'assistant', label: 'Assistant', default: true },
+  { id: 'assistant', label: 'Agent', default: true },
   { id: 'campaign', label: 'Campaign', default: true },
   { id: 'status', label: 'Status', default: true },
   { id: 'duration', label: 'Duration', default: true },
-  { id: 'cost', label: 'Cost', default: true },
+  { id: 'cost', label: 'Cost', default: false },
   { id: 'disposition', label: 'Disposition', default: true },
 ];
 
@@ -250,7 +250,7 @@ export default function Calls() {
               <SelectValue placeholder="All Assistants" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Assistants</SelectItem>
+              <SelectItem value="all">All Agents</SelectItem>
               {agents.map((agent) => (
                 <SelectItem key={agent.id} value={String(agent.id)}>
                   {agent.agent_name}
@@ -360,7 +360,7 @@ export default function Calls() {
               <TableRow>
                 {visibleColumns.includes('calledAt') && <TableHead>Called At</TableHead>}
                 {visibleColumns.includes('callee') && <TableHead>Callee</TableHead>}
-                {visibleColumns.includes('assistant') && <TableHead>Assistant</TableHead>}
+                {visibleColumns.includes('assistant') && <TableHead>Agent</TableHead>}
                 {visibleColumns.includes('campaign') && <TableHead>Campaign</TableHead>}
                 {visibleColumns.includes('status') && <TableHead>Status</TableHead>}
                 {visibleColumns.includes('duration') && <TableHead>Duration</TableHead>}

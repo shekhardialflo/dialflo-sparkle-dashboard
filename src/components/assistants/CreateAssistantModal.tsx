@@ -21,7 +21,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useVoices, useCreateAgent } from '@/hooks/use-agents';
+import { useVoices, usePhoneNumbers, useCreateAgent } from '@/hooks/use-agents';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,11 +32,12 @@ interface CreateAssistantModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const steps = ['Basics', 'Voice', 'Prompt', 'Variables', 'Review'];
+const steps = ['Basics', 'Voice', 'Prompt', 'Review'];
 
 export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModalProps) {
   const { toast } = useToast();
   const { data: voices = [], isLoading: voicesLoading } = useVoices();
+  const { data: phoneNumbers = [] } = usePhoneNumbers();
   const createAgent = useCreateAgent();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -45,11 +46,11 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
   const [primaryLanguage, setPrimaryLanguage] = useState('english');
   const [agentMode, setAgentMode] = useState<AgentMode>('outbound');
   const [selectedVoice, setSelectedVoice] = useState('');
+  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState('');
   const [firstMessage, setFirstMessage] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [isInterruptible, setIsInterruptible] = useState(true);
   const [syncDual, setSyncDual] = useState(true);
-  const [variables, setVariables] = useState<{ key: string; type: string }[]>([]);
 
   const resetForm = () => {
     setCurrentStep(0);
@@ -57,11 +58,11 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
     setPrimaryLanguage('english');
     setAgentMode('outbound');
     setSelectedVoice('');
+    setSelectedPhoneNumber('');
     setFirstMessage('');
     setSystemPrompt('');
     setIsInterruptible(true);
     setSyncDual(true);
-    setVariables([]);
   };
 
   const handleClose = () => {
@@ -79,7 +80,7 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
         call_type: callType,
         prompt: { system: systemPrompt },
         welcome_text: { default: firstMessage },
-        agent_phone_number: '',
+        agent_phone_number: selectedPhoneNumber,
         enabled: true,
       });
 
@@ -91,33 +92,26 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
           call_type: 'INCOMING',
           prompt: { system: systemPrompt },
           welcome_text: { default: firstMessage },
-          agent_phone_number: '',
+          agent_phone_number: selectedPhoneNumber,
           enabled: true,
         });
       }
 
       const modeLabel = agentMode === 'dual' ? ' (Dual pair)' : '';
       toast({
-        title: 'Assistant created',
+        title: 'Agent created',
         description: `${name}${modeLabel} has been created successfully.`,
       });
       handleClose();
     } catch {
       toast({
         title: 'Error',
-        description: 'Failed to create assistant. Please try again.',
+        description: 'Failed to create agent. Please try again.',
         variant: 'destructive',
       });
     }
   };
 
-  const addVariable = () => {
-    setVariables([...variables, { key: '', type: 'string' }]);
-  };
-
-  const removeVariable = (index: number) => {
-    setVariables(variables.filter((_, i) => i !== index));
-  };
 
   const directionFromMode = agentMode === 'inbound' ? 'Inbound' : agentMode === 'outbound' ? 'Outbound' : 'Inbound + Outbound';
 
@@ -183,6 +177,21 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                     <SelectItem value="hindi">Hindi</SelectItem>
                     <SelectItem value="spanish">Spanish</SelectItem>
                     <SelectItem value="french">French</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Select value={selectedPhoneNumber} onValueChange={setSelectedPhoneNumber}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a number (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {phoneNumbers.map((num) => (
+                      <SelectItem key={num.number} value={num.number}>
+                        {num.number}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -312,75 +321,6 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
 
           {currentStep === 3 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Custom Variables</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Define variables to use in prompts
-                  </p>
-                </div>
-                <Button variant="outline" size="sm" onClick={addVariable}>
-                  Add Variable
-                </Button>
-              </div>
-              {variables.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-8 text-center">
-                  <p className="text-sm text-muted-foreground">No variables defined yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {variables.map((variable, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        placeholder="Variable key"
-                        value={variable.key}
-                        onChange={(e) => {
-                          const updated = [...variables];
-                          updated[index].key = e.target.value;
-                          setVariables(updated);
-                        }}
-                      />
-                      <Select
-                        value={variable.type}
-                        onValueChange={(value) => {
-                          const updated = [...variables];
-                          updated[index].type = value;
-                          setVariables(updated);
-                        }}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="string">String</SelectItem>
-                          <SelectItem value="number">Number</SelectItem>
-                          <SelectItem value="boolean">Boolean</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button variant="ghost" size="icon" onClick={() => removeVariable(index)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="pt-4">
-                <Label>Knowledge Base</Label>
-                <Select disabled>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="No knowledge bases yet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No knowledge bases yet</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
-            <div className="space-y-4">
               <h3 className="font-medium">Review your configuration</h3>
               <div className="rounded-lg border p-4 space-y-3">
                 <div className="flex justify-between">
@@ -416,8 +356,8 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Variables</span>
-                  <span className="font-medium">{variables.length}</span>
+                  <span className="text-muted-foreground">Phone Number</span>
+                  <span className="font-medium">{selectedPhoneNumber || '-'}</span>
                 </div>
               </div>
               {agentMode === 'dual' && (
@@ -457,7 +397,7 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
           ) : (
             <Button onClick={handleCreate} disabled={!name || createAgent.isPending}>
               {createAgent.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Assistant
+              Create Agent
             </Button>
           )}
         </div>

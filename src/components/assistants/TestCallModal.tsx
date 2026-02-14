@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Phone, Globe, MessageSquare, Copy, Check } from 'lucide-react';
+import { Phone, Globe, MessageSquare, Copy, Check, Plus, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,11 +32,25 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
   const { toast } = useToast();
   const { data: phoneNumbers = [] } = usePhoneNumbers();
   const [selectedNumber, setSelectedNumber] = useState('');
-  const [calleeName, setCalleeName] = useState('');
   const [calleePhone, setCalleePhone] = useState('');
   const [copied, setCopied] = useState(false);
+  const [contextVars, setContextVars] = useState<{ key: string; value: string }[]>([]);
 
   if (!agent) return null;
+
+  const addContextVar = () => {
+    setContextVars([...contextVars, { key: '', value: '' }]);
+  };
+
+  const removeContextVar = (index: number) => {
+    setContextVars(contextVars.filter((_, i) => i !== index));
+  };
+
+  const updateContextVar = (index: number, field: 'key' | 'value', val: string) => {
+    const updated = [...contextVars];
+    updated[index][field] = val;
+    setContextVars(updated);
+  };
 
   const handleStartCall = () => {
     toast({
@@ -46,14 +60,17 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
     onOpenChange(false);
   };
 
+  const contextObj = Object.fromEntries(
+    contextVars.filter((v) => v.key).map((v) => [v.key, v.value])
+  );
+
   const handleCopyCurl = () => {
     const curl = `curl -X POST 'https://api.dialflo.com/v1/calls' \\
   -H 'Authorization: Bearer YOUR_API_KEY' \\
   -H 'Content-Type: application/json' \\
   -d '{
     "assistant_id": ${agent.id},
-    "phone_number": "${calleePhone}",
-    "name": "${calleeName}"
+    "phone_number": "${calleePhone}"${Object.keys(contextObj).length > 0 ? `,\n    "context": ${JSON.stringify(contextObj, null, 4)}` : ''}
   }'`;
     
     navigator.clipboard.writeText(curl);
@@ -71,7 +88,7 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
         <DialogHeader>
           <DialogTitle>Test {agent.agent_name}</DialogTitle>
           <DialogDescription>
-            Start a test call to verify your assistant is working correctly
+            Start a test call to verify your agent is working correctly
           </DialogDescription>
         </DialogHeader>
 
@@ -108,15 +125,6 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="callee-name">Callee Name</Label>
-              <Input
-                id="callee-name"
-                placeholder="John Doe"
-                value={calleeName}
-                onChange={(e) => setCalleeName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="callee-phone">Callee Phone</Label>
               <Input
                 id="callee-phone"
@@ -125,6 +133,44 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
                 onChange={(e) => setCalleePhone(e.target.value)}
               />
             </div>
+
+            {/* Call Context Variables */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Call Context</Label>
+                <Button variant="outline" size="sm" onClick={addContextVar}>
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Variable
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Add variables like source, city, etc. that your agent can use during the call.
+              </p>
+              {contextVars.length > 0 && (
+                <div className="space-y-2">
+                  {contextVars.map((v, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        placeholder="Variable name"
+                        value={v.key}
+                        onChange={(e) => updateContextVar(index, 'key', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Input
+                        placeholder="Value"
+                        value={v.value}
+                        onChange={(e) => updateContextVar(index, 'value', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeContextVar(index)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3 pt-4">
               <Button onClick={handleStartCall} className="flex-1">
                 Start Test Call

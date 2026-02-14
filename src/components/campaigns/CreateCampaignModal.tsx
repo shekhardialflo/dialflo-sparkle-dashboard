@@ -208,10 +208,10 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
               </div>
 
               <div className="space-y-2">
-                <Label>Select Assistant *</Label>
+                <Label>Select Agent *</Label>
                 <Select value={selectedAssistant} onValueChange={setSelectedAssistant}>
                   <SelectTrigger>
-                    <SelectValue placeholder={agentsLoading ? 'Loading...' : 'Choose an assistant'} />
+                    <SelectValue placeholder={agentsLoading ? 'Loading...' : 'Choose an agent'} />
                   </SelectTrigger>
                   <SelectContent>
                     {agents.map((agent) => (
@@ -410,7 +410,7 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                   <span className="font-medium">{name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Assistant</span>
+                  <span className="text-muted-foreground">Agent</span>
                   <span className="font-medium">
                     {selectedAgentName || '-'}
                   </span>

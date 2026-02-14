@@ -38,7 +38,7 @@ const sideNavItems = [
   { id: 'variables', label: 'Variables', icon: Code },
   { id: 'knowledge', label: 'Knowledge Base', icon: Database },
   { id: 'settings', label: 'Call Settings', icon: Settings },
-  { id: 'number', label: 'Attach Number', icon: Phone },
+  { id: 'number', label: 'Update Number', icon: Phone },
 ];
 
 const llmProviders = [
