@@ -153,7 +153,7 @@ export default function Analytics() {
     <div>
       <PageHeader
         title="Analytics"
-        subtitle="Track performance across calls, campaigns, and assistants"
+        subtitle="Track performance across calls, campaigns, and agents"
       />
 
       {/* Filter Bar */}
@@ -181,10 +181,10 @@ export default function Analytics() {
           />
         )}
 
-        {/* Multi-select assistants – shown on Assistants tab */}
+        {/* Multi-select agents – shown on Agents tab */}
         {activeTab === 'assistants' && (
           <MultiSelectFilter
-            label="Assistants"
+            label="Agents"
             options={agentOptions}
             selected={selectedAssistants}
             onChange={setSelectedAssistants}
@@ -219,7 +219,7 @@ export default function Analytics() {
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="assistants">Assistants</TabsTrigger>
+          <TabsTrigger value="assistants">Agents</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -491,13 +491,13 @@ export default function Analytics() {
               </div>
             ) : filteredAssistants.length === 0 ? (
               <div className="py-12 text-center text-sm text-muted-foreground">
-                No assistants found.
+                No agents found.
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Assistant</TableHead>
+                    <TableHead>Agent</TableHead>
                     <TableHead>Direction</TableHead>
                     <TableHead className="text-right">Total Calls</TableHead>
                     <TableHead className="text-right">Avg Duration</TableHead>

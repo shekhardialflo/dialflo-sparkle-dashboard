@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, Play, History, BarChart3, Trash2, Pencil, Lightbulb, HeartPulse } from 'lucide-react';
+import { Plus, MoreVertical, History, BarChart3, Trash2, Pencil, Lightbulb, HeartPulse } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -141,19 +141,19 @@ export default function Assistants() {
   return (
     <div>
       <PageHeader
-        title="Assistants"
-        subtitle="Manage your voice assistants"
+        title="Agents"
+        subtitle="Manage your voice agents"
         actions={
           <Button onClick={() => setCreateModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Assistant
+            Create Agent
           </Button>
         }
       />
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
         <SearchInput
-          placeholder="Search assistants..."
+          placeholder="Search agents..."
           value={searchQuery}
           onChange={setSearchQuery}
           className="w-full sm:max-w-sm"
@@ -210,8 +210,8 @@ export default function Assistants() {
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-sm text-muted-foreground">
             {agents.length === 0
-              ? 'No assistants yet. Create your first one!'
-              : 'No assistants match your filters.'}
+              ? 'No agents yet. Create your first one!'
+              : 'No agents match your filters.'}
           </p>
         </div>
       )}
@@ -302,10 +302,6 @@ function VoiceAgentCard({
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit Agent
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onTest(); }}>
-                <Play className="mr-2 h-4 w-4" />
-                Test
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onHistory}>
                 <History className="mr-2 h-4 w-4" />

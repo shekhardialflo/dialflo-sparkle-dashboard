@@ -194,7 +194,7 @@ export default function Campaigns() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Campaign</TableHead>
-                    <TableHead>Assistant</TableHead>
+                    <TableHead>Agent</TableHead>
                     <TableHead>List</TableHead>
                     <TableHead>Schedule</TableHead>
                     <TableHead>Status</TableHead>
