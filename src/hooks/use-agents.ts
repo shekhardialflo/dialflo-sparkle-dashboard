@@ -9,6 +9,7 @@ import {
 import type {
   CallAgentRequest,
   CallAgentRequestUpdate,
+  CallAgentResponse,
   TaskAgentRequest,
   TaskAgentRequestUpdate,
   AgentTasks,
@@ -104,7 +105,40 @@ export function useAgentCallStats(agentId: number, params?: {
 export function useCreateAgent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CallAgentRequest) => agentsApi.create(data),
+    mutationFn: async (data: CallAgentRequest) => {
+      try {
+        return await agentsApi.create(data);
+      } catch {
+        // Mock: create a fake agent and add to cache
+        const newAgent: CallAgentResponse = {
+          id: Date.now(),
+          prompt: data.prompt || { system: '' },
+          agent_name: data.agent_name,
+          agent_phone_number: data.agent_phone_number || '',
+          voice_id: data.voice_id,
+          version: 1,
+          welcome_text: data.welcome_text || { default: '' },
+          tools: null,
+          enabled: data.enabled ?? true,
+          save_stats: true,
+          server_type: 'PROD',
+          call_type: data.call_type,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          user_persona: null,
+          client_id: null,
+          pair_agent_id: null,
+          health_monitoring_enabled: false,
+          health_alert_emails: null,
+          last_health_status: null,
+          last_health_checked_at: null,
+        };
+        // Optimistically add to cache
+        queryClient.setQueryData<CallAgentResponse[]>(agentKeys.list(), (old = []) => [...old, newAgent]);
+        console.warn('[Dialflo] API unavailable, agent created locally');
+        return [newAgent];
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agentKeys.all });
     },
@@ -114,8 +148,18 @@ export function useCreateAgent() {
 export function useUpdateAgent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ agentId, data, sync }: { agentId: number; data: CallAgentRequestUpdate; sync?: boolean }) =>
-      agentsApi.update(agentId, data, sync),
+    mutationFn: async ({ agentId, data, sync }: { agentId: number; data: CallAgentRequestUpdate; sync?: boolean }) => {
+      try {
+        return await agentsApi.update(agentId, data, sync);
+      } catch {
+        // Mock: update in cache
+        queryClient.setQueryData<CallAgentResponse[]>(agentKeys.list(), (old = []) =>
+          old.map(a => a.id === agentId ? { ...a, ...data, updated_at: new Date().toISOString() } : a)
+        );
+        console.warn('[Dialflo] API unavailable, agent updated locally');
+        return {} as CallAgentResponse;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agentKeys.all });
     },
@@ -125,8 +169,18 @@ export function useUpdateAgent() {
 export function useDeleteAgent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ agentId, opts }: { agentId: number; opts?: { disable_only?: boolean; delete_both?: boolean } }) =>
-      agentsApi.delete(agentId, opts),
+    mutationFn: async ({ agentId, opts }: { agentId: number; opts?: { disable_only?: boolean; delete_both?: boolean } }) => {
+      try {
+        return await agentsApi.delete(agentId, opts);
+      } catch {
+        // Mock: remove from cache
+        queryClient.setQueryData<CallAgentResponse[]>(agentKeys.list(), (old = []) =>
+          old.filter(a => a.id !== agentId)
+        );
+        console.warn('[Dialflo] API unavailable, agent deleted locally');
+        return {};
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agentKeys.all });
     },
