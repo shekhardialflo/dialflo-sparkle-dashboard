@@ -328,7 +328,10 @@ function VoiceAgentCard({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <h3 className="mb-2 font-medium text-foreground text-sm">{agent.agent_name}</h3>
+        <h3 className="mb-1 font-medium text-foreground text-sm">{agent.agent_name}</h3>
+        {agent.agent_phone_number && (
+          <p className="mb-2 text-xs text-muted-foreground">{agent.agent_phone_number}</p>
+        )}
         <div className="mb-3 flex flex-wrap gap-1.5">
           <StatusBadge status="neutral">{direction}</StatusBadge>
           <StatusBadge status={getStatusBadgeVariant(status)}>{status}</StatusBadge>
