@@ -67,10 +67,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
   const [startDateVal, setStartDateVal] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('09:00');
   
-  // End scheduling
-  const [endMode, setEndMode] = useState<'until_paused' | 'end_on'>('until_paused');
-  const [endDateVal, setEndDateVal] = useState<Date | undefined>(undefined);
-  const [endTime, setEndTime] = useState('18:00');
 
   const [selectedList, setSelectedList] = useState('');
   
@@ -78,10 +74,10 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
   const [createdAudienceId, setCreatedAudienceId] = useState<string | null>(null);
   const [retryStrategy, setRetryStrategy] = useState<RetryStrategy>(defaultRetryStrategy);
 
-  // Generate time options in 15-min increments
+  // Generate time options in 15-min increments (6 AM to 11 PM)
   const timeOptions = useMemo(() => {
     const opts: { value: string; label: string }[] = [];
-    for (let h = 0; h < 24; h++) {
+    for (let h = 6; h <= 23; h++) {
       for (let m = 0; m < 60; m += 15) {
         const val = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         const hour12 = h % 12 === 0 ? 12 : h % 12;
@@ -118,23 +114,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     return d.toISOString();
   };
 
-  const getEndISO = () => {
-    if (endMode === 'until_paused') return null;
-    if (!endDateVal) return null;
-    const [h, m] = endTime.split(':').map(Number);
-    const d = new Date(endDateVal);
-    d.setHours(h, m, 0, 0);
-    return d.toISOString();
-  };
-
-  const endSummary = useMemo(() => {
-    if (endMode === 'until_paused' || !endDateVal) return null;
-    const [h, m] = endTime.split(':').map(Number);
-    const d = new Date(endDateVal);
-    d.setHours(h, m, 0, 0);
-    const timeLabel = timeOptions.find(t => t.value === endTime)?.label || endTime;
-    return `Campaign will end on ${format(d, 'dd-MM-yyyy')} ${timeLabel}`;
-  }, [endMode, endDateVal, endTime, timeOptions]);
 
   const resetForm = () => {
     setCurrentStep(0);
@@ -143,9 +122,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
     setStartMode('now');
     setStartDateVal(undefined);
     setStartTime('09:00');
-    setEndMode('until_paused');
-    setEndDateVal(undefined);
-    setEndTime('18:00');
     setSelectedList('');
     setUploadedFile(null);
     setCreatedAudienceId(null);
@@ -381,76 +357,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                 )}
               </div>
 
-              {/* End Section */}
-              <div className="space-y-3 rounded-lg border border-border p-4">
-                <Label className="text-sm font-semibold">End</Label>
-                <RadioGroup
-                  value={endMode}
-                  onValueChange={(v) => setEndMode(v as 'until_paused' | 'end_on')}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="until_paused" id="end-paused" />
-                    <Label htmlFor="end-paused" className="font-normal cursor-pointer">Run until paused</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="end_on" id="end-on" />
-                    <Label htmlFor="end-on" className="font-normal cursor-pointer">End on</Label>
-                  </div>
-                </RadioGroup>
-
-                {endMode === 'end_on' && (
-                  <>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">End date</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                'w-full justify-start text-left font-normal',
-                                !endDateVal && 'text-muted-foreground'
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {endDateVal ? format(endDateVal, 'dd-MM-yyyy') : 'dd-mm-yyyy'}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={endDateVal}
-                              onSelect={setEndDateVal}
-                              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                              initialFocus
-                              className="p-3 pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">End time</Label>
-                        <Select value={endTime} onValueChange={setEndTime}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-60">
-                            {timeOptions.map((t) => (
-                              <SelectItem key={t.value} value={t.value}>
-                                {t.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    {endSummary && (
-                      <p className="text-xs text-muted-foreground">{endSummary}</p>
-                    )}
-                  </>
-                )}
-              </div>
             </div>
           )}
 
@@ -636,7 +542,6 @@ export function CreateCampaignModal({ open, onOpenChange }: CreateCampaignModalP
                   <span className="text-muted-foreground">Schedule</span>
                   <span className="font-medium">
                     {startMode === 'now' ? 'Start immediately' : (startDateVal ? `${format(startDateVal, 'dd-MM-yyyy')} ${timeOptions.find(t => t.value === startTime)?.label}` : '-')}
-                    {endMode === 'end_on' && endDateVal ? ` — ${format(endDateVal, 'dd-MM-yyyy')} ${timeOptions.find(t => t.value === endTime)?.label}` : (endMode === 'until_paused' ? ' — Run until paused' : '')}
                   </span>
                 </div>
                 <div className="flex justify-between">
