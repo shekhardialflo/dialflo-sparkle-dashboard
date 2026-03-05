@@ -389,19 +389,51 @@ export function RetryStrategyEditor({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Input
-                        type="time"
-                        className="w-32"
+                      <Select
                         value={value.guardrails.startHour}
-                        onChange={(e) => updateGuardrails({ startHour: e.target.value })}
-                      />
+                        onValueChange={(v) => updateGuardrails({ startHour: v })}
+                      >
+                        <SelectTrigger className="w-36">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Start" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {Array.from({ length: 18 }, (_, i) => {
+                            const h = i + 6;
+                            for (let m = 0; m < 60; m += 15) {
+                              const hour12 = h % 12 || 12;
+                              const ampm = h < 12 ? 'AM' : 'PM';
+                              const label = `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
+                              const val = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                              return <SelectItem key={val} value={val}>{label}</SelectItem>;
+                            }
+                            return null;
+                          }).flat().filter(Boolean)}
+                        </SelectContent>
+                      </Select>
                       <span className="text-sm text-muted-foreground">to</span>
-                      <Input
-                        type="time"
-                        className="w-32"
+                      <Select
                         value={value.guardrails.endHour}
-                        onChange={(e) => updateGuardrails({ endHour: e.target.value })}
-                      />
+                        onValueChange={(v) => updateGuardrails({ endHour: v })}
+                      >
+                        <SelectTrigger className="w-36">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="End" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {Array.from({ length: 18 }, (_, i) => {
+                            const h = i + 6;
+                            for (let m = 0; m < 60; m += 15) {
+                              const hour12 = h % 12 || 12;
+                              const ampm = h < 12 ? 'AM' : 'PM';
+                              const label = `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
+                              const val = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                              return <SelectItem key={val} value={val}>{label}</SelectItem>;
+                            }
+                            return null;
+                          }).flat().filter(Boolean)}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
