@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Download, Settings2, X, Play, RefreshCw, FileJson, Volume2, FileText, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { DateTimeRangeFilter } from '@/components/shared/DateTimeRangeFilter';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
