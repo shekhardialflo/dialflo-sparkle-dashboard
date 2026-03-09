@@ -140,6 +140,11 @@ export default function Calls() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [directionFilter, setDirectionFilter] = useState('all');
   const [dispositionFilter, setDispositionFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('7');
+  const [customFromDate, setCustomFromDate] = useState<Date | undefined>();
+  const [customToDate, setCustomToDate] = useState<Date | undefined>();
+  const [customFromTime, setCustomFromTime] = useState('06:00');
+  const [customToTime, setCustomToTime] = useState('23:00');
   const [visibleColumns, setVisibleColumns] = useState(
     allColumns.filter((c) => c.default).map((c) => c.id)
   );
