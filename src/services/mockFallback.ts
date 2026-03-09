@@ -297,9 +297,18 @@ export const mockCallInsights: PaginatedCallInsightsResponse = {
   meta: { total: 5, has_next: false },
   data: [
     {
-      id: 1, call_id: 'call-001', agent_id: 1, insights_data: { interest_level: 'High' },
+      id: 1, call_id: 'call-001', agent_id: 1,
+      insights_data: {
+        notice_period_days: '50 days',
+        current_ctc: '30 LPA',
+        expected_ctc: '50 LPA',
+        eligible_for_role: 'Yes',
+        flutter_experience: 'Yes',
+        reason_for_switch: 'Technical growth',
+        interview_availability: 'Tomorrow 11 AM',
+      },
       call_audit: null, call_quality: null, call_context: null,
-      call_disposition: 'Interested', call_summary: 'Prospect showed strong interest in the product.',
+      call_disposition: 'Interested', call_summary: 'Prospect showed strong interest in the product. Currently serving 50-day notice period.',
       is_verified: true, verified_by: null, verification_history: [],
       created_at: daysAgo(1), updated_at: daysAgo(1),
       call_duration: 245, recording_url: null, transcript_url: null,

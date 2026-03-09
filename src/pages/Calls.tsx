@@ -508,9 +508,17 @@ function CallDetailsDrawer({ open, onOpenChange, call }: CallDetailsDrawerProps)
   };
 
   const getConfidenceLevel = () => {
-    // Placeholder confidence for disposition
     const confidence = Math.floor(Math.random() * 30 + 70);
     return confidence;
+  };
+
+  /** Convert snake_case keys to readable labels: notice_period_days → Notice Period Days, current_ctc → Current CTC */
+  const formatFieldLabel = (key: string): string => {
+    const acronyms = new Set(['ctc', 'id', 'url', 'api', 'hr', 'lpa']);
+    return key
+      .split('_')
+      .map((word) => (acronyms.has(word) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1)))
+      .join(' ');
   };
 
   return (
