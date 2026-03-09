@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Download, Settings2, Calendar, X, Play, RefreshCw, FileJson, Volume2, FileText, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Settings2, X, Play, RefreshCw, FileJson, Volume2, FileText, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { DateTimeRangeFilter } from '@/components/shared/DateTimeRangeFilter';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -139,6 +140,11 @@ export default function Calls() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [directionFilter, setDirectionFilter] = useState('all');
   const [dispositionFilter, setDispositionFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('7');
+  const [customFromDate, setCustomFromDate] = useState<Date | undefined>();
+  const [customToDate, setCustomToDate] = useState<Date | undefined>();
+  const [customFromTime, setCustomFromTime] = useState('06:00');
+  const [customToTime, setCustomToTime] = useState('23:00');
   const [visibleColumns, setVisibleColumns] = useState(
     allColumns.filter((c) => c.default).map((c) => c.id)
   );
@@ -222,26 +228,34 @@ export default function Calls() {
         title="Calls"
         subtitle="Search and review individual calls"
         actions={
-          <div className="flex items-center gap-3">
-            <Button variant="outline">
-              <Calendar className="mr-2 h-4 w-4" />
-              Last 7 days
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
         }
       />
 
       <div className="mb-4 flex flex-col gap-4">
-        <SearchInput
-          placeholder="Search by phone/name/call id..."
-          value={searchQuery}
-          onChange={setSearchQuery}
-          className="max-w-md"
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput
+            placeholder="Search by phone/name/call id..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+            className="max-w-md"
+          />
+          <DateTimeRangeFilter
+            preset={dateRange}
+            onPresetChange={setDateRange}
+            fromDate={customFromDate}
+            toDate={customToDate}
+            fromTime={customFromTime}
+            toTime={customToTime}
+            onFromDateChange={setCustomFromDate}
+            onToDateChange={setCustomToDate}
+            onFromTimeChange={setCustomFromTime}
+            onToTimeChange={setCustomToTime}
+          />
+        </div>
 
         {/* Filter pills row */}
         <div className="flex flex-wrap items-center gap-2">

@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar, TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { DateTimeRangeFilter } from '@/components/shared/DateTimeRangeFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -74,6 +75,10 @@ export default function Analytics() {
   const initialAssistant = searchParams.get('assistant');
 
   const [dateRange, setDateRange] = useState('7');
+  const [customFromDate, setCustomFromDate] = useState<Date | undefined>();
+  const [customToDate, setCustomToDate] = useState<Date | undefined>();
+  const [customFromTime, setCustomFromTime] = useState('06:00');
+  const [customToTime, setCustomToTime] = useState('23:00');
   const [selectedAgents, setSelectedAgents] = useState<string[]>(
     initialAssistant ? [initialAssistant] : []
   );
@@ -158,18 +163,18 @@ export default function Analytics() {
 
       {/* Filter Bar */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-36">
-            <Calendar className="mr-2 h-4 w-4" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="custom">Custom</SelectItem>
-          </SelectContent>
-        </Select>
+        <DateTimeRangeFilter
+          preset={dateRange}
+          onPresetChange={setDateRange}
+          fromDate={customFromDate}
+          toDate={customToDate}
+          fromTime={customFromTime}
+          toTime={customToTime}
+          onFromDateChange={setCustomFromDate}
+          onToDateChange={setCustomToDate}
+          onFromTimeChange={setCustomFromTime}
+          onToTimeChange={setCustomToTime}
+        />
 
         {/* Multi-select agents – shown on Overview and Campaigns tabs */}
         {(activeTab === 'overview' || activeTab === 'campaigns') && (
