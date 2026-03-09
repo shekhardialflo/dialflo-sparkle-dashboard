@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar, TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { DateTimeRangeFilter } from '@/components/shared/DateTimeRangeFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
