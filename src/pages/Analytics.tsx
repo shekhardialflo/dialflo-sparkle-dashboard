@@ -75,6 +75,10 @@ export default function Analytics() {
   const initialAssistant = searchParams.get('assistant');
 
   const [dateRange, setDateRange] = useState('7');
+  const [customFromDate, setCustomFromDate] = useState<Date | undefined>();
+  const [customToDate, setCustomToDate] = useState<Date | undefined>();
+  const [customFromTime, setCustomFromTime] = useState('06:00');
+  const [customToTime, setCustomToTime] = useState('23:00');
   const [selectedAgents, setSelectedAgents] = useState<string[]>(
     initialAssistant ? [initialAssistant] : []
   );
