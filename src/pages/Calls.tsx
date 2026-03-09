@@ -590,20 +590,22 @@ function CallDetailsDrawer({ open, onOpenChange, call }: CallDetailsDrawerProps)
               </div>
             )}
 
-            {/* Extracted Fields (if insight agent ran) */}
-            {call.extractedFields && Object.keys(call.extractedFields).length > 0 && (
-              <div className="rounded-lg border border-border/50 p-4">
-                <p className="text-xs font-medium text-muted-foreground mb-3">Extracted Fields</p>
-                <div className="space-y-2">
+            {/* Extracted Fields */}
+            <div className="rounded-lg border border-border/50 p-4">
+              <p className="text-xs font-medium text-muted-foreground mb-3">Extracted Fields</p>
+              {call.extractedFields && Object.keys(call.extractedFields).length > 0 ? (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                   {Object.entries(call.extractedFields).map(([key, value]) => (
-                    <div key={key} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                      <span className="font-medium">{String(value)}</span>
+                    <div key={key} className="min-w-0">
+                      <p className="text-[11px] text-muted-foreground truncate">{formatFieldLabel(key)}</p>
+                      <p className="text-sm font-medium mt-0.5 truncate">{value != null && value !== '' ? String(value) : '—'}</p>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-muted-foreground">No extracted fields available for this call.</p>
+              )}
+            </div>
 
             <Separator />
 
