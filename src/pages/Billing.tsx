@@ -177,8 +177,7 @@ export default function Billing() {
     <div className="space-y-6">
       <PageHeader
         title="Billing"
-        description="Track usage and billed minutes across agents and organizations"
-        icon={<Receipt className="h-6 w-6" />}
+        subtitle="Track usage and billed minutes across agents and organizations"
       />
 
       {/* Filters Row */}

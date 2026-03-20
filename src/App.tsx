@@ -44,6 +44,7 @@ const App = () => (
                         <Route path="/campaigns" element={<Campaigns />} />
                         <Route path="/calls" element={<Calls />} />
                         <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/billing" element={<Billing />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </DashboardLayout>
