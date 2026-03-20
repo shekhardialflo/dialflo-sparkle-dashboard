@@ -12,6 +12,7 @@ import Assistants from "./pages/Assistants";
 import Campaigns from "./pages/Campaigns";
 import Calls from "./pages/Calls";
 import Analytics from "./pages/Analytics";
+import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
