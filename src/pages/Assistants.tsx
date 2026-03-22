@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, History, BarChart3, Trash2, Pencil, Lightbulb, HeartPulse } from 'lucide-react';
+import { Plus, MoreVertical, History, BarChart3, Trash2, Pencil, Lightbulb, HeartPulse, Receipt } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
