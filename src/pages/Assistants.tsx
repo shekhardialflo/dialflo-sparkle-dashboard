@@ -274,6 +274,7 @@ interface VoiceAgentCardProps {
   onAnalytics: () => void;
   onInsight: () => void;
   onHealth: () => void;
+  onBilling: () => void;
   onDelete: () => void;
 }
 
@@ -286,6 +287,7 @@ function VoiceAgentCard({
   onAnalytics,
   onInsight,
   onHealth,
+  onBilling,
   onDelete,
 }: VoiceAgentCardProps) {
   const { direction, status, initials } = getAgentDisplayInfo(agent);
