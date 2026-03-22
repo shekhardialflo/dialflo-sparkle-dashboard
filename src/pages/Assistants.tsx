@@ -322,6 +322,10 @@ function VoiceAgentCard({
                 <HeartPulse className="mr-2 h-4 w-4" />
                 Health
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={onBilling}>
+                <Receipt className="mr-2 h-4 w-4" />
+                Billing
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onInsight}>
                 <Lightbulb className="mr-2 h-4 w-4" />
