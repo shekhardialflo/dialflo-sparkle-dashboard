@@ -233,6 +233,7 @@ export default function Assistants() {
               onAnalytics={() => handleAnalytics(agent.id)}
               onInsight={() => handleInsightAgent(agent)}
               onHealth={() => handleHealth(agent)}
+              onBilling={() => handleBilling(agent.id.toString())}
               onDelete={() => handleDelete(agent)}
             />
           ))}
