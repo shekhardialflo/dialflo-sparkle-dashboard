@@ -1,18 +1,14 @@
 import { useState, useMemo } from 'react';
-import { Receipt, Building2, Bot, Calculator, Phone, Clock, TrendingUp } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Bot, Calculator, Phone, Clock, DollarSign, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DateTimeRangeFilter } from '@/components/shared/DateTimeRangeFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -25,27 +21,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { callRecords, voiceAgents } from '@/data/mockData';
 
-// --- Mock Organizations ---
-const organizations = [
-  { id: 'all', name: 'All Organizations' },
-  { id: 'org-1', name: 'Dialflo' },
-  { id: 'org-2', name: 'Intugine' },
-  { id: 'org-3', name: 'Caredale' },
-  { id: 'org-4', name: 'Careernet' },
-  { id: 'org-5', name: 'Onest' },
-];
+const RATE_PER_MINUTE = 1.5; // ₹ per billed minute
 
-// Map agents to orgs for demo
-const agentOrgMap: Record<string, string> = {
-  va1: 'org-1',
-  va2: 'org-1',
-  va3: 'org-2',
-  va4: 'org-3',
-  va5: 'org-4',
-  va6: 'org-4',
-  va7: 'org-5',
-  va8: 'org-2',
-};
+const INTERNAL_NUMBERS = ['+91 70001 00001', '+91 70001 00002'];
 
 /** Bracket billing: ceil to nearest minute per call */
 function bracketMinutes(durationSeconds: number): number {
@@ -54,26 +32,18 @@ function bracketMinutes(durationSeconds: number): number {
 }
 
 export default function Billing() {
-  // Filters
-  const [selectedOrg, setSelectedOrg] = useState('all');
-  const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
+  const [searchParams] = useSearchParams();
+  const preSelectedAgent = searchParams.get('agent');
+
+  const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>(
+    preSelectedAgent ? [preSelectedAgent] : []
+  );
   const [preset, setPreset] = useState('30');
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const [fromTime, setFromTime] = useState('06:00');
   const [toTime, setToTime] = useState('23:00');
-
-  // Agents filtered by org
-  const filteredAgents = useMemo(() => {
-    if (selectedOrg === 'all') return voiceAgents;
-    return voiceAgents.filter((a) => agentOrgMap[a.id] === selectedOrg);
-  }, [selectedOrg]);
-
-  // Reset agent selection when org changes
-  const handleOrgChange = (org: string) => {
-    setSelectedOrg(org);
-    setSelectedAgentIds([]);
-  };
+  const [excludeInternal, setExcludeInternal] = useState(false);
 
   const toggleAgent = (agentId: string) => {
     setSelectedAgentIds((prev) =>
@@ -82,14 +52,14 @@ export default function Billing() {
   };
 
   const selectAllAgents = () => {
-    if (selectedAgentIds.length === filteredAgents.length) {
+    if (selectedAgentIds.length === voiceAgents.length) {
       setSelectedAgentIds([]);
     } else {
-      setSelectedAgentIds(filteredAgents.map((a) => a.id));
+      setSelectedAgentIds(voiceAgents.map((a) => a.id));
     }
   };
 
-  // Date range filter
+  // Date range
   const dateRange = useMemo(() => {
     const now = new Date();
     if (preset === 'custom') {
@@ -104,27 +74,22 @@ export default function Billing() {
   // Filter calls
   const filteredCalls = useMemo(() => {
     const activeAgentIds =
-      selectedAgentIds.length > 0
-        ? selectedAgentIds
-        : filteredAgents.map((a) => a.id);
+      selectedAgentIds.length > 0 ? selectedAgentIds : voiceAgents.map((a) => a.id);
 
     return callRecords.filter((call) => {
-      // Agent filter
       if (!activeAgentIds.includes(call.assistantId)) return false;
-
-      // Only connected calls with duration
       if (call.status !== 'connected' || call.duration <= 0) return false;
+      if (excludeInternal && INTERNAL_NUMBERS.includes(call.calleePhone)) return false;
 
-      // Date filter
       const callDate = new Date(call.calledAt);
       if (dateRange.from && callDate < dateRange.from) return false;
       if (dateRange.to && callDate > dateRange.to) return false;
 
       return true;
     });
-  }, [selectedAgentIds, filteredAgents, dateRange]);
+  }, [selectedAgentIds, dateRange, excludeInternal]);
 
-  // Billing calculations — per-call bracket then sum
+  // Billing calculations
   const billingData = useMemo(() => {
     const perCallMinutes = filteredCalls.map((call) => ({
       ...call,
@@ -135,8 +100,8 @@ export default function Billing() {
     const totalBilledMinutes = perCallMinutes.reduce((sum, c) => sum + c.billedMinutes, 0);
     const totalRawSeconds = perCallMinutes.reduce((sum, c) => sum + c.rawSeconds, 0);
     const totalCalls = perCallMinutes.length;
+    const totalCost = totalBilledMinutes * RATE_PER_MINUTE;
 
-    // Breakdown per agent
     const agentBreakdown = new Map<
       string,
       { agentName: string; calls: number; billedMinutes: number; rawSeconds: number }
@@ -160,6 +125,7 @@ export default function Billing() {
       totalBilledMinutes,
       totalRawSeconds,
       totalCalls,
+      totalCost,
       agentBreakdown: Array.from(agentBreakdown.entries()).map(([id, data]) => ({
         agentId: id,
         ...data,
@@ -173,36 +139,54 @@ export default function Billing() {
     return `${m}m ${s}s`;
   };
 
+  const handleDownload = () => {
+    const headers = ['Date', 'Callee', 'Phone', 'Agent', 'Duration (s)', 'Bracket', 'Billed Minutes', 'Cost (₹)'];
+    const rows = billingData.perCallMinutes.map((call) => {
+      const lower = (call.billedMinutes - 1) * 60 + 1;
+      const upper = call.billedMinutes * 60;
+      return [
+        format(new Date(call.calledAt), 'dd MMM yyyy, hh:mm a'),
+        call.calleeName,
+        call.calleePhone,
+        call.assistantName,
+        call.rawSeconds,
+        `${lower}-${upper}s`,
+        call.billedMinutes,
+        (call.billedMinutes * RATE_PER_MINUTE).toFixed(2),
+      ].join(',');
+    });
+
+    // Add totals row
+    rows.push('');
+    rows.push(`,,,,Total,,${billingData.totalBilledMinutes},${billingData.totalCost.toFixed(2)}`);
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `billing-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Billing"
-        subtitle="Track usage and billed minutes across agents and organizations"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Billing"
+          subtitle="Track usage and billed minutes across agents"
+        />
+        <Button onClick={handleDownload} variant="outline" size="sm" className="gap-2">
+          <Download className="h-4 w-4" />
+          Download Report
+        </Button>
+      </div>
 
       {/* Filters Row */}
       <div className="flex flex-wrap items-end gap-4">
-        {/* Organization Filter */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Organization</label>
-          <Select value={selectedOrg} onValueChange={handleOrgChange}>
-            <SelectTrigger className="w-52">
-              <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {organizations.map((org) => (
-                <SelectItem key={org.id} value={org.id}>
-                  {org.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Date Range */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Duration</label>
+          <label className="text-sm font-medium text-muted-foreground">Period</label>
           <DateTimeRangeFilter
             preset={preset}
             onPresetChange={setPreset}
@@ -217,6 +201,17 @@ export default function Billing() {
             showTime={false}
           />
         </div>
+
+        <div className="flex items-center gap-2 pb-0.5">
+          <Switch
+            id="exclude-internal"
+            checked={excludeInternal}
+            onCheckedChange={setExcludeInternal}
+          />
+          <Label htmlFor="exclude-internal" className="text-sm text-muted-foreground cursor-pointer">
+            Exclude internal numbers
+          </Label>
+        </div>
       </div>
 
       {/* Agent Selection */}
@@ -228,13 +223,13 @@ export default function Billing() {
               Select Agents
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={selectAllAgents}>
-              {selectedAgentIds.length === filteredAgents.length ? 'Deselect All' : 'Select All'}
+              {selectedAgentIds.length === voiceAgents.length ? 'Deselect All' : 'Select All'}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {filteredAgents.map((agent) => {
+            {voiceAgents.map((agent) => {
               const isSelected = selectedAgentIds.includes(agent.id);
               return (
                 <button
@@ -252,9 +247,6 @@ export default function Billing() {
                 </button>
               );
             })}
-            {filteredAgents.length === 0 && (
-              <p className="text-sm text-muted-foreground">No agents found for this organization.</p>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -311,18 +303,12 @@ export default function Billing() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                <DollarSign className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Billing Overhead</p>
+                <p className="text-sm text-muted-foreground">Estimated Cost</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {billingData.totalRawSeconds > 0
-                    ? `+${Math.round(
-                        ((billingData.totalBilledMinutes * 60 - billingData.totalRawSeconds) /
-                          billingData.totalRawSeconds) *
-                          100
-                      )}%`
-                    : '—'}
+                  ₹{billingData.totalCost.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -344,36 +330,25 @@ export default function Billing() {
                   <TableHead className="text-right">Calls</TableHead>
                   <TableHead className="text-right">Raw Duration</TableHead>
                   <TableHead className="text-right">Billed Minutes</TableHead>
-                  <TableHead className="text-right">Overhead</TableHead>
+                  <TableHead className="text-right">Cost (₹)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {billingData.agentBreakdown.map((row) => {
-                  const overhead =
-                    row.rawSeconds > 0
-                      ? Math.round(
-                          ((row.billedMinutes * 60 - row.rawSeconds) / row.rawSeconds) * 100
-                        )
-                      : 0;
-                  return (
-                    <TableRow key={row.agentId}>
-                      <TableCell className="font-medium">{row.agentName}</TableCell>
-                      <TableCell className="text-right">{row.calls}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {formatDuration(row.rawSeconds)}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-primary">
-                        {row.billedMinutes} min
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="secondary" className="text-xs">
-                          +{overhead}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {/* Totals row */}
+                {billingData.agentBreakdown.map((row) => (
+                  <TableRow key={row.agentId}>
+                    <TableCell className="font-medium">{row.agentName}</TableCell>
+                    <TableCell className="text-right">{row.calls}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {formatDuration(row.rawSeconds)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-primary">
+                      {row.billedMinutes} min
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      ₹{(row.billedMinutes * RATE_PER_MINUTE).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))}
                 <TableRow className="bg-muted/30 font-semibold">
                   <TableCell>Total</TableCell>
                   <TableCell className="text-right">{billingData.totalCalls}</TableCell>
@@ -384,15 +359,7 @@ export default function Billing() {
                     {billingData.totalBilledMinutes} min
                   </TableCell>
                   <TableCell className="text-right">
-                    <Badge variant="secondary" className="text-xs">
-                      {billingData.totalRawSeconds > 0
-                        ? `+${Math.round(
-                            ((billingData.totalBilledMinutes * 60 - billingData.totalRawSeconds) /
-                              billingData.totalRawSeconds) *
-                              100
-                          )}%`
-                        : '—'}
-                    </Badge>
+                    ₹{billingData.totalCost.toFixed(2)}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -422,12 +389,13 @@ export default function Billing() {
                   <TableHead className="text-right">Duration</TableHead>
                   <TableHead className="text-right">Bracket</TableHead>
                   <TableHead className="text-right">Billed</TableHead>
+                  <TableHead className="text-right">Cost (₹)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {billingData.perCallMinutes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No calls found for the selected filters.
                     </TableCell>
                   </TableRow>
@@ -458,6 +426,9 @@ export default function Billing() {
                         <TableCell className="text-right font-semibold text-primary">
                           {call.billedMinutes} min
                         </TableCell>
+                        <TableCell className="text-right text-sm">
+                          ₹{(call.billedMinutes * RATE_PER_MINUTE).toFixed(2)}
+                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -472,8 +443,8 @@ export default function Billing() {
       <div className="rounded-lg border border-border bg-muted/30 p-4">
         <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">Billing Logic:</strong> Each call is rounded up to the nearest minute.
-          A call lasting 1–60 seconds = 1 minute, 61–120 seconds = 2 minutes, and so on. 
-          Minutes are calculated per call individually, not as a sum of raw seconds.
+          A call lasting 1–60 seconds = 1 minute, 61–120 seconds = 2 minutes, and so on.
+          Rate: ₹{RATE_PER_MINUTE}/min. Minutes are calculated per call individually, not as a sum of raw seconds.
         </p>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, History, BarChart3, Trash2, Pencil, Lightbulb, HeartPulse } from 'lucide-react';
+import { Plus, MoreVertical, History, BarChart3, Trash2, Pencil, Lightbulb, HeartPulse, Receipt } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
@@ -105,6 +105,10 @@ export default function Assistants() {
 
   const handleAnalytics = (agentId: number) => {
     navigate(`/analytics?assistant=${agentId}`);
+  };
+
+  const handleBilling = (agentId: string) => {
+    navigate(`/billing?agent=${agentId}`);
   };
 
   const handleInsightAgent = (agent: CallAgentResponse) => {
@@ -229,6 +233,7 @@ export default function Assistants() {
               onAnalytics={() => handleAnalytics(agent.id)}
               onInsight={() => handleInsightAgent(agent)}
               onHealth={() => handleHealth(agent)}
+              onBilling={() => handleBilling(agent.id.toString())}
               onDelete={() => handleDelete(agent)}
             />
           ))}
@@ -269,6 +274,7 @@ interface VoiceAgentCardProps {
   onAnalytics: () => void;
   onInsight: () => void;
   onHealth: () => void;
+  onBilling: () => void;
   onDelete: () => void;
 }
 
@@ -281,6 +287,7 @@ function VoiceAgentCard({
   onAnalytics,
   onInsight,
   onHealth,
+  onBilling,
   onDelete,
 }: VoiceAgentCardProps) {
   const { direction, status, initials } = getAgentDisplayInfo(agent);
@@ -314,6 +321,10 @@ function VoiceAgentCard({
               <DropdownMenuItem onClick={onHealth}>
                 <HeartPulse className="mr-2 h-4 w-4" />
                 Health
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onBilling}>
+                <Receipt className="mr-2 h-4 w-4" />
+                Billing
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onInsight}>
