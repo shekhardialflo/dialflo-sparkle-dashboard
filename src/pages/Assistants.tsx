@@ -107,6 +107,10 @@ export default function Assistants() {
     navigate(`/analytics?assistant=${agentId}`);
   };
 
+  const handleBilling = (agentId: string) => {
+    navigate(`/billing?agent=${agentId}`);
+  };
+
   const handleInsightAgent = (agent: CallAgentResponse) => {
     setInsightAgent(agent);
     setInsightModalOpen(true);
