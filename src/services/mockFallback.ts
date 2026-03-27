@@ -16,7 +16,7 @@ import type {
 export const mockAgents: CallAgentResponse[] = [
   {
     id: 1,
-    prompt: { system: 'You are a professional sales qualification agent.' },
+    prompt: { system: 'You are a professional sales qualification agent. The lead name is {{name}} from {{city}}. They found us via {{source}}.' },
     agent_name: 'Sales Qualifier',
     agent_phone_number: '+1234567890',
     voice_id: 'v-sarah',
@@ -39,7 +39,7 @@ export const mockAgents: CallAgentResponse[] = [
   },
   {
     id: 2,
-    prompt: { system: 'You are a helpful customer support agent.' },
+    prompt: { system: 'You are a helpful customer support agent. Customer name is {{customer_name}} with ticket {{ticket_id}}.' },
     agent_name: 'Customer Support',
     agent_phone_number: '+1234567891',
     voice_id: 'v-james',
@@ -62,7 +62,7 @@ export const mockAgents: CallAgentResponse[] = [
   },
   {
     id: 3,
-    prompt: { system: 'Schedule appointments with qualified prospects.' },
+    prompt: { system: 'Schedule appointments with qualified prospects. Prospect name is {{prospect_name}} from {{company}}.' },
     agent_name: 'Appointment Setter',
     agent_phone_number: '+1234567892',
     voice_id: 'v-michael',
@@ -85,7 +85,7 @@ export const mockAgents: CallAgentResponse[] = [
   },
   {
     id: 4,
-    prompt: { system: 'Conduct customer satisfaction surveys.' },
+    prompt: { system: 'Conduct customer satisfaction surveys. Customer is {{customer_name}} for order {{order_id}}.' },
     agent_name: 'Survey Bot',
     agent_phone_number: '+1234567893',
     voice_id: 'v-priya',
@@ -108,7 +108,7 @@ export const mockAgents: CallAgentResponse[] = [
   },
   {
     id: 5,
-    prompt: { system: 'Nurture warm leads with personalized follow-ups.' },
+    prompt: { system: 'Nurture warm leads with personalized follow-ups. Lead is {{lead_name}} interested in {{product}}.' },
     agent_name: 'Lead Nurture',
     agent_phone_number: '+1234567894',
     voice_id: 'v-sarah',
@@ -131,7 +131,7 @@ export const mockAgents: CallAgentResponse[] = [
   },
   {
     id: 6,
-    prompt: { system: 'Remind customers about pending payments professionally.' },
+    prompt: { system: 'Remind customers about pending payments professionally. Customer {{customer_name}} owes {{amount}} due on {{due_date}}.' },
     agent_name: 'Payment Reminder',
     agent_phone_number: '+1234567895',
     voice_id: 'v-james',
