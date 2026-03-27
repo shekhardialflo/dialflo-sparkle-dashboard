@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Phone, Copy, Check, Plus, X } from 'lucide-react';
 import {
   Dialog,
@@ -19,11 +19,48 @@ interface TestCallModalProps {
   agent: CallAgentResponse | null;
 }
 
+/** Extract {{variable}} placeholders from all prompt text */
+function extractPromptVariables(agent: CallAgentResponse): string[] {
+  const vars = new Set<string>();
+  const regex = /\{\{(\w+)\}\}/g;
+  // Scan all prompt values
+  if (agent.prompt) {
+    Object.values(agent.prompt).forEach((val) => {
+      const text = typeof val === 'string' ? val : JSON.stringify(val);
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(text)) !== null) {
+        vars.add(match[1]);
+      }
+    });
+  }
+  // Also scan welcome_text
+  if (agent.welcome_text) {
+    Object.values(agent.welcome_text).forEach((val) => {
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(val)) !== null) {
+        vars.add(match[1]);
+      }
+    });
+  }
+  return Array.from(vars);
+}
+
 export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps) {
   const { toast } = useToast();
   const [calleePhone, setCalleePhone] = useState('');
   const [copied, setCopied] = useState(false);
   const [contextVars, setContextVars] = useState<{ key: string; value: string }[]>([]);
+
+  const promptVars = useMemo(() => (agent ? extractPromptVariables(agent) : []), [agent]);
+
+  // Auto-populate context vars from prompt when modal opens
+  useEffect(() => {
+    if (open && agent && promptVars.length > 0) {
+      setContextVars(promptVars.map((key) => ({ key, value: '' })));
+    } else if (open && agent) {
+      setContextVars([]);
+    }
+  }, [open, agent?.id, promptVars]);
 
   if (!agent) return null;
 
@@ -102,29 +139,34 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Add variables like source, city, etc. that your agent can use during the call.
+              Variables detected from prompt are pre-filled. Add custom ones as needed.
             </p>
             {contextVars.length > 0 && (
               <div className="space-y-2">
-                {contextVars.map((v, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      placeholder="Variable name"
-                      value={v.key}
-                      onChange={(e) => updateContextVar(index, 'key', e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      placeholder="Value"
-                      value={v.value}
-                      onChange={(e) => updateContextVar(index, 'value', e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeContextVar(index)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                {contextVars.map((v, index) => {
+                  const isFromPrompt = promptVars.includes(v.key);
+                  return (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        placeholder="Variable name"
+                        value={v.key}
+                        onChange={(e) => updateContextVar(index, 'key', e.target.value)}
+                        className="flex-1"
+                        readOnly={isFromPrompt}
+                        disabled={isFromPrompt}
+                      />
+                      <Input
+                        placeholder="Enter value"
+                        value={v.value}
+                        onChange={(e) => updateContextVar(index, 'value', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeContextVar(index)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
