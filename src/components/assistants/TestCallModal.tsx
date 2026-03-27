@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Phone, Globe, MessageSquare, Copy, Check, Plus, X } from 'lucide-react';
+import { Phone, Copy, Check, Plus, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,16 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { CallAgentResponse } from '@/types/api';
-import { usePhoneNumbers } from '@/hooks/use-agents';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestCallModalProps {
@@ -30,8 +21,6 @@ interface TestCallModalProps {
 
 export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps) {
   const { toast } = useToast();
-  const { data: phoneNumbers = [] } = usePhoneNumbers();
-  const [selectedNumber, setSelectedNumber] = useState('');
   const [calleePhone, setCalleePhone] = useState('');
   const [copied, setCopied] = useState(false);
   const [contextVars, setContextVars] = useState<{ key: string; value: string }[]>([]);
@@ -92,94 +81,64 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="phone" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="phone" className="gap-2">
-              <Phone className="h-4 w-4" />
-              Phone Call
-            </TabsTrigger>
-            <TabsTrigger value="web" className="gap-2">
-              <Globe className="h-4 w-4" />
-              Web Call
-            </TabsTrigger>
-            <TabsTrigger value="chat" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Live Chat
-            </TabsTrigger>
-          </TabsList>
+        <div className="mt-4 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="callee-phone">Callee Phone</Label>
+            <Input
+              id="callee-phone"
+              placeholder="+91 9876543210"
+              value={calleePhone}
+              onChange={(e) => setCalleePhone(e.target.value)}
+            />
+          </div>
 
-          <TabsContent value="phone" className="mt-4 space-y-4">
-            <div className="space-y-2">
-              <Label>Call From Number</Label>
-              <Select value={selectedNumber} onValueChange={setSelectedNumber}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a number" />
-                </SelectTrigger>
-                <SelectContent>
-                  {phoneNumbers.map((num) => (
-                    <SelectItem key={num.number} value={num.number}>
-                      {num.number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Call Context Variables */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Call Context</Label>
+              <Button variant="outline" size="sm" onClick={addContextVar}>
+                <Plus className="mr-1 h-3 w-3" />
+                Add Variable
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="callee-phone">Callee Phone</Label>
-              <Input
-                id="callee-phone"
-                placeholder="+91 9876543210"
-                value={calleePhone}
-                onChange={(e) => setCalleePhone(e.target.value)}
-              />
-            </div>
-
-            {/* Call Context Variables */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Call Context</Label>
-                <Button variant="outline" size="sm" onClick={addContextVar}>
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add Variable
-                </Button>
+            <p className="text-xs text-muted-foreground">
+              Add variables like source, city, etc. that your agent can use during the call.
+            </p>
+            {contextVars.length > 0 && (
+              <div className="space-y-2">
+                {contextVars.map((v, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      placeholder="Variable name"
+                      value={v.key}
+                      onChange={(e) => updateContextVar(index, 'key', e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      placeholder="Value"
+                      value={v.value}
+                      onChange={(e) => updateContextVar(index, 'value', e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeContextVar(index)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Add variables like source, city, etc. that your agent can use during the call.
-              </p>
-              {contextVars.length > 0 && (
-                <div className="space-y-2">
-                  {contextVars.map((v, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        placeholder="Variable name"
-                        value={v.key}
-                        onChange={(e) => updateContextVar(index, 'key', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        placeholder="Value"
-                        value={v.value}
-                        onChange={(e) => updateContextVar(index, 'value', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeContextVar(index)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
+          </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button onClick={handleStartCall} className="flex-1">
-                Start Test Call
-              </Button>
-              <Button variant="outline" onClick={handleCopyCurl}>
-                {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                Copy cURL
-              </Button>
-            </div>
+          <div className="flex gap-3 pt-4">
+            <Button onClick={handleStartCall} className="flex-1">
+              <Phone className="mr-2 h-4 w-4" />
+              Start Test Call
+            </Button>
+            <Button variant="outline" onClick={handleCopyCurl}>
+              {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+              Copy cURL
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
