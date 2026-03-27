@@ -139,29 +139,34 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Add variables like source, city, etc. that your agent can use during the call.
+              Variables detected from prompt are pre-filled. Add custom ones as needed.
             </p>
             {contextVars.length > 0 && (
               <div className="space-y-2">
-                {contextVars.map((v, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      placeholder="Variable name"
-                      value={v.key}
-                      onChange={(e) => updateContextVar(index, 'key', e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      placeholder="Value"
-                      value={v.value}
-                      onChange={(e) => updateContextVar(index, 'value', e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeContextVar(index)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                {contextVars.map((v, index) => {
+                  const isFromPrompt = promptVars.includes(v.key);
+                  return (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        placeholder="Variable name"
+                        value={v.key}
+                        onChange={(e) => updateContextVar(index, 'key', e.target.value)}
+                        className="flex-1"
+                        readOnly={isFromPrompt}
+                        disabled={isFromPrompt}
+                      />
+                      <Input
+                        placeholder="Enter value"
+                        value={v.value}
+                        onChange={(e) => updateContextVar(index, 'value', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeContextVar(index)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
