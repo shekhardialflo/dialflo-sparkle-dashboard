@@ -180,28 +180,7 @@ export function TestCallModal({ open, onOpenChange, agent }: TestCallModalProps)
                 Copy cURL
               </Button>
             </div>
-          </TabsContent>
-
-          <TabsContent value="web" className="mt-4 space-y-4">
-            <div className="rounded-lg border border-dashed p-8 text-center">
-              <Globe className="mx-auto h-10 w-10 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                Web call testing will open an in-browser call interface
-              </p>
-              <Button className="mt-4">Start Web Call</Button>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="chat" className="mt-4 space-y-4">
-            <div className="rounded-lg border border-dashed p-8 text-center">
-              <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                Live chat testing will open a text-based conversation
-              </p>
-              <Button className="mt-4">Start Chat</Button>
-            </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
