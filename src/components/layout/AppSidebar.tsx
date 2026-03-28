@@ -1,4 +1,4 @@
-import { Bot, Megaphone, Phone, BarChart3, Receipt, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bot, Megaphone, Phone, BarChart3, Receipt, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
