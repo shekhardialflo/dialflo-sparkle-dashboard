@@ -36,6 +36,7 @@ interface CreateAssistantModalProps {
 const steps = ['Basics', 'Voice', 'Prompt', 'Review'];
 
 export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModalProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { data: voices = [], isLoading: voicesLoading } = useVoices();
   const { data: phoneNumbers = [] } = usePhoneNumbers();
