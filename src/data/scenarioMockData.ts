@@ -222,7 +222,7 @@ export const mockScenarios: Scenario[] = [
     utterances: [
       { step: 'Opening', lines: ['My internet has been down since morning.', 'The app keeps crashing when I open it.'] },
       { step: 'Diagnosis', lines: ['I already tried restarting.', 'The light is blinking red.'] },
-      { step: 'Resolution', lines: ['Oh it's working now, thanks!', 'When will the technician come?'] },
+      { step: 'Resolution', lines: ["Oh it's working now, thanks!", 'When will the technician come?'] },
     ],
     informationCaptured: ['Product Model', 'Account ID', 'Issue Description', 'Steps Tried', 'Error Code'],
     edgeCases: [
