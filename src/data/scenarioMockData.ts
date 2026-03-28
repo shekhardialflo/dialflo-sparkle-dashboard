@@ -67,7 +67,7 @@ export const mockScenarios: Scenario[] = [
       agentTask: 'Look up order status and provide accurate ETA',
       expectedOutcome: 'Customer gets delivery timeline without escalation',
     },
-    triggerDetail: 'Customer places an order and hasn't received it within expected window, or tracking shows no movement.',
+    triggerDetail: "Customer places an order and hasn't received it within expected window, or tracking shows no movement.",
     flow: [
       { id: '1', type: 'action', label: 'Greet customer', branches: [{ label: '', targetId: '2' }] },
       { id: '2', type: 'question', label: 'Ask for Order ID', branches: [{ label: 'Provided', targetId: '3' }, { label: 'Not available', targetId: '2a' }] },
@@ -81,10 +81,10 @@ export const mockScenarios: Scenario[] = [
       { id: '7', type: 'end', label: 'End call' },
     ],
     utterances: [
-      { step: 'Opening', lines: ['Hi, I'm calling to check on my order.', 'Hello, can you tell me where my delivery is?'] },
+      { step: 'Opening', lines: ["Hi, I'm calling to check on my order.", 'Hello, can you tell me where my delivery is?'] },
       { step: 'Identity Confirmation', lines: ['My order number is ORD-4821.', 'I placed it on the 15th, name is Rajesh.'] },
-      { step: 'Status Check', lines: ['When will it arrive?', 'It's been 5 days already.'] },
-      { step: 'Closing', lines: ['Okay, thank you for the update.', 'Please call me if there's any delay.'] },
+      { step: 'Status Check', lines: ['When will it arrive?', "It's been 5 days already."] },
+      { step: 'Closing', lines: ['Okay, thank you for the update.', "Please call me if there's any delay."] },
     ],
     informationCaptured: ['Order ID', 'Customer Name', 'Phone Number', 'Delivery Address', 'Expected ETA', 'Callback Preference'],
     edgeCases: [
@@ -137,7 +137,7 @@ export const mockScenarios: Scenario[] = [
     informationCaptured: ['Transaction ID', 'Payment Method', 'Amount', 'Order ID', 'Return Status'],
     edgeCases: [
       { title: 'Double Charge', example: '"I was charged twice for the same order"', frequency: '6%' },
-      { title: 'Expired Refund Window', example: '"It's been 30 days, is it too late?"', frequency: '4%' },
+      { title: 'Expired Refund Window', example: "\"It's been 30 days, is it too late?\"", frequency: '4%' },
     ],
     outcomes: ['Refund Initiated', 'Payment Fixed', 'Escalated', 'Pending Investigation'],
     representativeCalls: [
@@ -178,11 +178,11 @@ export const mockScenarios: Scenario[] = [
     utterances: [
       { step: 'Opening', lines: ['I need to book an appointment for next week.', 'Can I reschedule my Thursday appointment?'] },
       { step: 'Scheduling', lines: ['Tuesday 3 PM works for me.', 'Do you have anything in the morning?'] },
-      { step: 'Closing', lines: ['Great, I'll be there. Thanks!', 'Please send me a reminder.'] },
+      { step: 'Closing', lines: ["Great, I'll be there. Thanks!", 'Please send me a reminder.'] },
     ],
     informationCaptured: ['Customer Name', 'Phone Number', 'Preferred Date', 'Preferred Time', 'Service Type', 'Location'],
     edgeCases: [
-      { title: 'No slots available this week', example: '"Everything is full? That's annoying."', frequency: '7%' },
+      { title: 'No slots available this week', example: "\"Everything is full? That's annoying.\"", frequency: '7%' },
       { title: 'Customer wants specific doctor/agent', example: '"I only want Dr. Sharma"', frequency: '5%' },
     ],
     outcomes: ['Appointment Booked', 'Rescheduled', 'Cancelled', 'No Suitable Slot'],
@@ -271,7 +271,7 @@ export const mockScenarios: Scenario[] = [
     informationCaptured: ['Customer Name', 'Complaint Category', 'Description', 'Previous Interactions', 'Desired Resolution'],
     edgeCases: [
       { title: 'Escalation Demand', example: '"I want to speak to your manager NOW"', frequency: '12%' },
-      { title: 'Threatening to go public', example: '"I'll post this on social media"', frequency: '4%' },
+      { title: 'Threatening to go public', example: "\"I'll post this on social media\"", frequency: '4%' },
     ],
     outcomes: ['Complaint Logged', 'Compensation Offered', 'Escalated to Manager', 'Feedback Recorded'],
     representativeCalls: [
