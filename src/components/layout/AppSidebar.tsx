@@ -1,4 +1,4 @@
-import { Bot, Megaphone, Phone, BarChart3, Receipt, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bot, Megaphone, Phone, BarChart3, Receipt, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -20,6 +20,7 @@ const navItems = [
   { title: 'Calls', url: '/calls', icon: Phone },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'Billing', url: '/billing', icon: Receipt },
+  { title: 'Scenarios', url: '/scenario-discovery', icon: Search },
 ];
 
 export function AppSidebar() {
