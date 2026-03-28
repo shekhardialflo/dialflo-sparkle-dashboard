@@ -12,6 +12,7 @@ import Assistants from "./pages/Assistants";
 import Campaigns from "./pages/Campaigns";
 import Calls from "./pages/Calls";
 import Analytics from "./pages/Analytics";
+import ScenarioDiscovery from "./pages/ScenarioDiscovery";
 import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,7 @@ const App = () => (
                         <Route path="/campaigns" element={<Campaigns />} />
                         <Route path="/calls" element={<Calls />} />
                         <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/scenario-discovery" element={<ScenarioDiscovery />} />
                         <Route path="/billing" element={<Billing />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { PhoneOutgoing, PhoneIncoming, ChevronRight, ChevronLeft, Check, X, Link2, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { PhoneOutgoing, PhoneIncoming, ChevronRight, ChevronLeft, Check, X, Link2, Loader2, Sparkles } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ interface CreateAssistantModalProps {
 const steps = ['Basics', 'Voice', 'Prompt', 'Review'];
 
 export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModalProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { data: voices = [], isLoading: voicesLoading } = useVoices();
   const { data: phoneNumbers = [] } = usePhoneNumbers();
@@ -302,6 +304,19 @@ export function CreateAssistantModal({ open, onOpenChange }: CreateAssistantModa
                   value={systemPrompt}
                   onChange={(e) => setSystemPrompt(e.target.value)}
                 />
+                <div
+                  className="flex items-center gap-2 rounded-lg border border-dashed border-secondary/30 bg-secondary/5 p-3 cursor-pointer hover:bg-secondary/10 transition-colors"
+                  onClick={() => {
+                    handleClose();
+                    navigate('/scenario-discovery');
+                  }}
+                >
+                  <Sparkles className="h-4 w-4 text-secondary" />
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Need help writing prompts?</p>
+                    <p className="text-[10px] text-muted-foreground">Upload call recordings to auto-discover scenarios and generate prompts.</p>
+                  </div>
+                </div>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
