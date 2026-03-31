@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DateTimeRangeFilter } from '@/components/shared/DateTimeRangeFilter';
-import { CallQualityImprovement } from '@/components/analytics/CallQualityImprovement';
+import { GPSHandoverSuccessTrend } from '@/components/analytics/GPSHandoverSuccessTrend';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
