@@ -369,7 +369,7 @@ export default function Analytics() {
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <CallQualityImprovement />
+            <GPSHandoverSuccessTrend />
 
             <Card>
               <CardHeader>
