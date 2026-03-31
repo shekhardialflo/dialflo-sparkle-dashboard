@@ -369,21 +369,7 @@ export default function Analytics() {
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Disposition Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 mb-3">
-                    <Info className="h-5 w-5 text-muted-foreground/70" />
-                  </div>
-                  <p className="text-sm text-muted-foreground max-w-[280px]">
-                    Disposition breakdown is available when viewing a specific campaign.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <CallQualityImprovement />
 
             <Card>
               <CardHeader>
