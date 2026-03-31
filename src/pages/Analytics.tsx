@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DateTimeRangeFilter } from '@/components/shared/DateTimeRangeFilter';
 import { GPSHandoverSuccessTrend } from '@/components/analytics/GPSHandoverSuccessTrend';
+import { AgentQualityConsistency } from '@/components/analytics/AgentQualityConsistency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -371,46 +372,7 @@ export default function Analytics() {
           <div className="grid gap-6 lg:grid-cols-2">
             <GPSHandoverSuccessTrend />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Top Campaigns</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {campaignsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : campaignsData.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    No campaigns available.
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Campaign</TableHead>
-                        <TableHead className="text-right">Attempted</TableHead>
-                        <TableHead className="text-right">Answer %</TableHead>
-                        <TableHead className="text-right">Conv %</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {campaignsData.slice(0, 5).map((campaign: CampaignResponse) => {
-                        const metrics = getCampaignMetrics(campaign.call_status_summary);
-                        return (
-                          <TableRow key={campaign.campaign_id}>
-                            <TableCell className="font-medium">{campaign.campaign_name}</TableCell>
-                            <TableCell className="text-right">{metrics.attempted}</TableCell>
-                            <TableCell className="text-right">{metrics.answerRate}%</TableCell>
-                            <TableCell className="text-right">{metrics.conversion}%</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            <AgentQualityConsistency />
           </div>
         </TabsContent>
 
